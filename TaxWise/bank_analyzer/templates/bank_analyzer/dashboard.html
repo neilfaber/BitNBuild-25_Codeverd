@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Transaction Analysis Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f0f2f5; padding: 20px; }
+        h1 { text-align: center; }
+        .category { background: white; padding: 15px; border-radius: 8px; margin: 20px auto; width: 80%; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border-bottom: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #4CAF50; color: white; }
+        tr:hover { background: #f1f1f1; }
+        .error { color: red; text-align: center; }
+    </style>
+</head>
+<body>
+    <h1>Transaction Analysis Dashboard</h1>
+
+    {% if analysis.error %}
+        <p class="error">{{ analysis.error }}</p>
+        <pre>{{ analysis.raw_output }}</pre>
+    {% else %}
+        {% for category, transactions in analysis.items %}
+            <div class="category">
+                <h2>{{ category }}</h2>
+                <table>
+                    <tr>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th>Amount</th>
+                    </tr>
+                    {% for txn in transactions %}
+                        <tr>
+                            <td>{{ txn.date }}</td>
+                            <td>{{ txn.description }}</td>
+                            <td>{{ txn.amount }}</td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        {% endfor %}
+    {% endif %}
+</body>
+</html>
