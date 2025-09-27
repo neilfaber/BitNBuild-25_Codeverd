@@ -178,6 +178,65 @@
             from { opacity: 0; transform: translateX(50px); }
             to { opacity: 1; transform: translateX(0); }
         }
+        
+        /* Profile Dropdown Styles */
+        .profile-dropdown {
+            min-width: 280px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            border: none;
+            border-radius: 15px;
+        }
+        
+        .profile-dropdown .dropdown-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 15px 15px 0 0;
+            margin: -8px -16px 0 -16px;
+            padding: 20px 16px;
+        }
+        
+        .profile-dropdown .dropdown-item {
+            padding: 12px 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .profile-dropdown .dropdown-item:hover {
+            background-color: var(--light-bg);
+            transform: translateX(5px);
+        }
+        
+        .user-avatar {
+            display: inline-block;
+        }
+        
+        .user-name {
+            font-weight: 600;
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        /* User Statistics Modal Styles */
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .stats-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stats-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
     </style>
     
     {% block extra_css %}{% endblock %}
@@ -228,6 +287,49 @@
                             </a></li>
                         </ul>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'tax_optimization:data-ingestion-upload' %}">
+                            <i class="fas fa-cloud-upload-alt me-1"></i>Smart Data Ingestion
+                        </a>
+                    </li>
+                    
+                    <!-- User Profile Dropdown -->
+                    {% if user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <div class="user-avatar me-2">
+                                <i class="fas fa-user-circle fa-lg"></i>
+                            </div>
+                            <span class="user-name">{{ user.first_name|default:user.username }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end profile-dropdown" aria-labelledby="profileDropdown">
+                            <li class="dropdown-header">
+                                <div class="text-center pb-2">
+                                    <i class="fas fa-user-circle fa-3x text-primary mb-2"></i>
+                                    <div class="fw-bold">{{ user.first_name|default:user.username }}</div>
+                                    <small class="text-muted">{{ user.email }}</small>
+                                </div>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#accountInfoModal">
+                                <i class="fas fa-info-circle me-2"></i>Account Info
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="showUserStats()">
+                                <i class="fas fa-chart-bar me-2"></i>My Statistics
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'authentication:logout' %}">
+                                <i class="fas fa-sign-out-alt me-2"></i>Sign Out
+                            </a></li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'authentication:login' %}">
+                            <i class="fas fa-sign-in-alt me-1"></i>Login
+                        </a>
+                    </li>
+                    {% endif %}
                 </ul>
             </div>
         </div>
@@ -237,6 +339,167 @@
     <div class="container my-4">
         {% block content %}{% endblock %}
     </div>
+
+    <!-- Account Info Modal -->
+    {% if user.is_authenticated %}
+    <div class="modal fade" id="accountInfoModal" tabindex="-1" aria-labelledby="accountInfoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="accountInfoModalLabel">
+                        <i class="fas fa-user-circle me-2"></i>Account Information
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-4 text-center mb-4">
+                            <i class="fas fa-user-circle fa-5x text-primary mb-3"></i>
+                            <h5>{{ user.first_name|default:user.username }}</h5>
+                            <span class="badge bg-success">Active User</span>
+                        </div>
+                        <div class="col-md-8">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th><i class="fas fa-user me-2"></i>Full Name:</th>
+                                    <td>{{ user.first_name }} {{ user.last_name|default:"Not provided" }}</td>
+                                </tr>
+                                <tr>
+                                    <th><i class="fas fa-envelope me-2"></i>Email:</th>
+                                    <td>{{ user.email }}</td>
+                                </tr>
+                                <tr>
+                                    <th><i class="fas fa-id-badge me-2"></i>Username:</th>
+                                    <td>{{ user.username }}</td>
+                                </tr>
+                                <tr>
+                                    <th><i class="fas fa-calendar me-2"></i>Member Since:</th>
+                                    <td>{{ user.date_joined|date:"M d, Y" }}</td>
+                                </tr>
+                                <tr>
+                                    <th><i class="fas fa-clock me-2"></i>Last Login:</th>
+                                    <td>{{ user.last_login|date:"M d, Y H:i"|default:"Never" }}</td>
+                                </tr>
+                                <tr>
+                                    <th><i class="fas fa-shield-alt me-2"></i>Account Status:</th>
+                                    <td>
+                                        {% if user.is_active %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <i class="fas fa-info-circle me-2"></i>Account Features
+                                    </h6>
+                                    <ul class="list-unstyled mb-0">
+                                        <li><i class="fas fa-check text-success me-2"></i>AI-powered tax calculations</li>
+                                        <li><i class="fas fa-check text-success me-2"></i>CIBIL score analysis</li>
+                                        <li><i class="fas fa-check text-success me-2"></i>Smart data ingestion</li>
+                                        <li><i class="fas fa-check text-success me-2"></i>Personalized recommendations</li>
+                                        <li><i class="fas fa-check text-success me-2"></i>Bank statement analysis</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Statistics Modal -->
+    <div class="modal fade" id="userStatsModal" tabindex="-1" aria-labelledby="userStatsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title" id="userStatsModalLabel">
+                        <i class="fas fa-chart-bar me-2"></i>My TaxWise Statistics
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="stats-card bg-success">
+                                <div class="stats-number" id="totalCalculations">15</div>
+                                <div class="stats-label">Tax Calculations</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="stats-card bg-primary">
+                                <div class="stats-number" id="totalSavings">₹45,200</div>
+                                <div class="stats-label">Total Tax Savings</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="stats-card bg-warning">
+                                <div class="stats-number" id="cibilScore">750</div>
+                                <div class="stats-label">Current CIBIL Score</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="stats-card bg-info">
+                                <div class="stats-number" id="documentsUploaded">8</div>
+                                <div class="stats-label">Documents Processed</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6><i class="fas fa-history me-2"></i>Recent Activity</h6>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-group list-group-flush">
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <i class="fas fa-calculator text-primary me-2"></i>
+                                                Tax calculation completed
+                                            </div>
+                                            <small class="text-muted">2 days ago</small>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <i class="fas fa-credit-card text-info me-2"></i>
+                                                CIBIL score updated
+                                            </div>
+                                            <small class="text-muted">1 week ago</small>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <i class="fas fa-file-upload text-success me-2"></i>
+                                                Bank statement processed
+                                            </div>
+                                            <small class="text-muted">2 weeks ago</small>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Footer -->
     <footer class="footer">
@@ -314,6 +577,47 @@
                 }, index * 100);
             });
         });
+        
+        // Show user statistics modal
+        function showUserStats() {
+            // You can add AJAX call here to fetch real user statistics
+            // For now, we'll show the modal with sample data
+            const modal = new bootstrap.Modal(document.getElementById('userStatsModal'));
+            modal.show();
+            
+            // Optional: Animate numbers counting up
+            animateCounter('totalCalculations', 15, 1000);
+            animateCounter('cibilScore', 750, 1500);
+            animateCounter('documentsUploaded', 8, 800);
+        }
+        
+        // Animate counter numbers
+        function animateCounter(elementId, targetValue, duration) {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+            
+            const startValue = 0;
+            const increment = targetValue / (duration / 16);
+            let currentValue = startValue;
+            
+            const timer = setInterval(() => {
+                currentValue += increment;
+                if (currentValue >= targetValue) {
+                    clearInterval(timer);
+                    if (elementId === 'totalSavings') {
+                        element.textContent = '₹45,200';
+                    } else {
+                        element.textContent = Math.floor(targetValue);
+                    }
+                } else {
+                    if (elementId === 'totalSavings') {
+                        element.textContent = '₹' + Math.floor(currentValue).toLocaleString();
+                    } else {
+                        element.textContent = Math.floor(currentValue);
+                    }
+                }
+            }, 16);
+        }
     </script>
     
     {% block extra_js %}{% endblock %}

@@ -24,7 +24,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', landing_page, name='landing'),  # Landing page as root
     path('auth/', include('social_django.urls', namespace='social')),
-    path('auth/', include('authentication.urls')),
+    path('auth/', include('authentication.urls', namespace='authentication')),
     path('tax-ai/', include('tax_optimization.urls')),  # Protected tax AI routes
     path('', include('bank_analyzer.urls')),
 ]

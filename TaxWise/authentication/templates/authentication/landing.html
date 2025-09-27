@@ -3,30 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TaxWise AI - Smart Tax Optimization Platform</title>
+    <title>TaxWise - Your Taxes Finally Organized</title>
     
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
+    <!-- CSS Styles -->
     <style>
-        :root {
-            --primary-color: #2563eb;
-            --primary-dark: #1d4ed8;
-            --secondary-color: #64748b;
-            --accent-color: #10b981;
-            --warning-color: #f59e0b;
-            --text-dark: #1e293b;
-            --text-light: #64748b;
-            --bg-light: #f8fafc;
-            --white: #ffffff;
-        }
-
         * {
             margin: 0;
             padding: 0;
@@ -34,18 +14,79 @@
         }
 
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             line-height: 1.6;
-            color: var(--text-dark);
+            color: #333;
             overflow-x: hidden;
+        }
+
+        /* Header */
+        .header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #e5e5e5;
+            z-index: 1000;
+            padding: 0 2rem;
+        }
+
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem 0;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #10B981;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #666;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: #10B981;
+        }
+
+        .get-started-btn {
+            background: #10B981;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .get-started-btn:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
         }
 
         /* Hero Section */
         .hero {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            color: white;
+            padding: 8rem 2rem 4rem;
+            text-align: center;
             position: relative;
             overflow: hidden;
         }
@@ -57,415 +98,598 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
-            opacity: 0.5;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="1" fill="%23ffffff" opacity="0.1"><animate attributeName="opacity" values="0.1;0.3;0.1" dur="3s" repeatCount="indefinite"/></circle><circle cx="80" cy="30" r="1" fill="%23ffffff" opacity="0.1"><animate attributeName="opacity" values="0.1;0.3;0.1" dur="4s" repeatCount="indefinite"/></circle><circle cx="60" cy="70" r="1" fill="%23ffffff" opacity="0.1"><animate attributeName="opacity" values="0.1;0.3;0.1" dur="2s" repeatCount="indefinite"/></circle></svg>');
         }
 
         .hero-content {
+            max-width: 800px;
+            margin: 0 auto;
             position: relative;
             z-index: 2;
-            text-align: center;
-            color: white;
         }
 
         .hero h1 {
             font-size: 3.5rem;
-            font-weight: 800;
+            font-weight: 700;
             margin-bottom: 1.5rem;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            line-height: 1.2;
         }
 
-        .hero .subtitle {
-            font-size: 1.3rem;
-            font-weight: 300;
+        .hero p {
+            font-size: 1.25rem;
             margin-bottom: 2rem;
             opacity: 0.9;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
         }
 
-        .hero .cta-buttons {
-            margin-top: 2rem;
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
         }
 
-        .btn-hero {
-            padding: 1rem 2.5rem;
-            font-size: 1.1rem;
-            font-weight: 600;
+        .btn-primary {
+            background: white;
+            color: #10B981;
+            padding: 1rem 2rem;
+            border: none;
             border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.1rem;
             text-decoration: none;
-            margin: 0.5rem;
-            transition: all 0.3s ease;
-            display: inline-block;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
-        .btn-hero.primary {
-            background: var(--white);
-            color: var(--primary-color);
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
         }
 
-        .btn-hero.primary:hover {
-            background: var(--bg-light);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-        }
-
-        .btn-hero.secondary {
+        .btn-secondary {
             background: transparent;
-            color: var(--white);
-            border: 2px solid var(--white);
+            color: white;
+            padding: 1rem 2rem;
+            border: 2px solid white;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            text-decoration: none;
+            transition: all 0.3s;
         }
 
-        .btn-hero.secondary:hover {
-            background: var(--white);
-            color: var(--primary-color);
-            transform: translateY(-2px);
+        .btn-secondary:hover {
+            background: white;
+            color: #10B981;
         }
 
         /* Features Section */
         .features {
-            padding: 5rem 0;
-            background: var(--white);
+            padding: 6rem 2rem;
+            background: #f8fafc;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-title h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 1rem;
+        }
+
+        .section-title p {
+            font-size: 1.2rem;
+            color: #666;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-top: 4rem;
         }
 
         .feature-card {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
             text-align: center;
-            padding: 2rem;
-            border-radius: 1rem;
-            background: var(--white);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.07);
-            transition: all 0.3s ease;
-            height: 100%;
-            border: 1px solid #f1f5f9;
         }
 
         .feature-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(16, 185, 129, 0.15);
         }
 
         .feature-icon {
-            font-size: 3rem;
-            color: var(--primary-color);
-            margin-bottom: 1.5rem;
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #10B981, #059669);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 2rem;
         }
 
         .feature-card h3 {
             font-size: 1.5rem;
             font-weight: 600;
+            color: #1a202c;
             margin-bottom: 1rem;
-            color: var(--text-dark);
         }
 
         .feature-card p {
-            color: var(--text-light);
-            font-size: 1rem;
-            line-height: 1.6;
+            color: #666;
+            line-height: 1.7;
         }
 
-        /* Stats Section */
-        .stats {
-            background: var(--bg-light);
-            padding: 4rem 0;
+        /* Dashboard Preview */
+        .dashboard-preview {
+            padding: 6rem 2rem;
+            background: white;
         }
 
-        .stat-item {
-            text-align: center;
+        .preview-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .preview-text h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 1.5rem;
+        }
+
+        .preview-text p {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 2rem;
+            line-height: 1.7;
+        }
+
+        .preview-image {
+            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 50px rgba(16, 185, 129, 0.1);
+        }
+
+        .mock-dashboard {
+            background: white;
+            border-radius: 15px;
             padding: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
         }
 
-        .stat-number {
-            font-size: 3rem;
-            font-weight: 800;
-            color: var(--primary-color);
-            display: block;
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e5e5e5;
+        }
+
+        .dashboard-title {
+            font-weight: 600;
+            color: #1a202c;
+        }
+
+        .dashboard-date {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: #f8fafc;
+            padding: 1rem;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #10B981;
         }
 
         .stat-label {
-            font-size: 1.1rem;
-            color: var(--text-light);
-            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 0.25rem;
         }
 
-        /* CTA Section */
-        .cta-section {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
-            padding: 5rem 0;
-            color: white;
-            text-align: center;
+        /* Pricing Section */
+        .pricing {
+            padding: 6rem 2rem;
+            background: #f8fafc;
         }
 
-        .cta-section h2 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-        }
-
-        .cta-section p {
-            font-size: 1.2rem;
-            opacity: 0.9;
-            margin-bottom: 2rem;
-            max-width: 600px;
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 4rem;
+            max-width: 1000px;
             margin-left: auto;
             margin-right: auto;
         }
 
-        /* Animations */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .pricing-card {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            position: relative;
+            transition: all 0.3s;
         }
 
-        .fade-in-up {
-            animation: fadeInUp 0.6s ease-out;
+        .pricing-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 50px rgba(16, 185, 129, 0.15);
+        }
+
+        .pricing-card.featured {
+            border: 2px solid #10B981;
+            transform: scale(1.05);
+        }
+
+        .pricing-badge {
+            background: #10B981;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .pricing-price {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #1a202c;
+            margin: 1rem 0;
+        }
+
+        .pricing-features {
+            list-style: none;
+            margin: 2rem 0;
+        }
+
+        .pricing-features li {
+            padding: 0.5rem 0;
+            color: #666;
+        }
+
+        .pricing-features li::before {
+            content: "✓";
+            color: #10B981;
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+
+        /* Footer */
+        .footer {
+            background: #1a202c;
+            color: white;
+            padding: 4rem 2rem 2rem;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 3rem;
+        }
+
+        .footer-section h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #10B981;
+        }
+
+        .footer-section a {
+            color: #9ca3af;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 0.5rem;
+            transition: color 0.3s;
+        }
+
+        .footer-section a:hover {
+            color: #10B981;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid #374151;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            text-align: center;
+            color: #9ca3af;
         }
 
         /* Responsive Design */
         @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
             .hero h1 {
                 font-size: 2.5rem;
             }
 
-            .hero .subtitle {
+            .hero p {
                 font-size: 1.1rem;
             }
 
-            .btn-hero {
-                padding: 0.8rem 2rem;
-                font-size: 1rem;
-                display: block;
-                margin: 0.5rem auto;
-                max-width: 250px;
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
             }
 
-            .features {
-                padding: 3rem 0;
+            .preview-content {
+                grid-template-columns: 1fr;
+                gap: 2rem;
             }
 
-            .feature-card {
-                margin-bottom: 2rem;
+            .dashboard-stats {
+                grid-template-columns: 1fr;
             }
-        }
 
-        /* Floating elements animation */
-        .floating {
-            animation: floating 3s ease-in-out infinite;
-        }
-
-        @keyframes floating {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav">
+            <div class="logo">TaxWise</div>
+            <ul class="nav-links">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#dashboard">Dashboard</a></li>
+                <li><a href="#pricing">Pricing</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+            <a href="{% url 'authentication:login' %}" class="get-started-btn">Get Started</a>
+        </nav>
+    </header>
+
     <!-- Hero Section -->
     <section class="hero">
-        <div class="container">
-            <div class="hero-content fade-in-up">
-                <h1 class="floating">TaxWise AI</h1>
-                <p class="subtitle">
-                    Revolutionize your tax strategy with AI-powered optimization. 
-                    Get personalized recommendations and maximize your savings effortlessly.
-                </p>
-                
-                <div class="cta-buttons">
-                    <a href="{% url 'login' %}" class="btn-hero primary">
-                        <i class="fas fa-rocket"></i> Get Started Free
-                    </a>
-                    <a href="#features" class="btn-hero secondary">
-                        <i class="fas fa-info-circle"></i> Learn More
-                    </a>
-                </div>
-                
-                <div style="margin-top: 2rem; font-size: 0.9rem; opacity: 0.8;">
-                    <i class="fas fa-shield-alt"></i> 
-                    Secure • AI-Powered • Bank-Grade Security
-                </div>
+        <div class="hero-content">
+            <h1>Your Taxes<br>Finally Organized.</h1>
+            <p>Simplify tax management with AI-powered optimization, smart document analysis, and CIBIL score improvement - all in one intelligent platform.</p>
+            <div class="cta-buttons">
+                <a href="{% url 'authentication:login' %}" class="btn-primary">
+                    🚀 Start Optimizing
+                </a>
+                <a href="#features" class="btn-secondary">Learn More</a>
             </div>
         </div>
     </section>
 
     <!-- Features Section -->
-    <section id="features" class="features">
+    <section class="features" id="features">
         <div class="container">
-            <div class="row text-center mb-5">
-                <div class="col">
-                    <h2 style="font-size: 2.5rem; font-weight: 700; color: var(--text-dark); margin-bottom: 1rem;">
-                        Why Choose TaxWise AI?
-                    </h2>
-                    <p style="font-size: 1.2rem; color: var(--text-light); max-width: 600px; margin: 0 auto;">
-                        Experience the future of tax optimization with our cutting-edge AI technology
+            <div class="section-title">
+                <h2>Get Started in Minutes.<br>Stay Ahead All Year.</h2>
+                <p>Our AI-powered platform transforms complex tax management into simple, automated processes that save you time and money.</p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🤖</div>
+                    <h3>AI Tax Optimization</h3>
+                    <p>Smart algorithms analyze your financial data to identify tax-saving opportunities and provide personalized recommendations for maximum refunds.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Bank Statement Analysis</h3>
+                    <p>Automatically categorize transactions, identify deductible expenses, and generate comprehensive financial reports with advanced AI processing.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">📈</div>
+                    <h3>CIBIL Score Advisor</h3>
+                    <p>Monitor your credit health, get improvement recommendations, and simulate scenarios to optimize your credit score for better financial outcomes.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dashboard Preview -->
+    <section class="dashboard-preview" id="dashboard">
+        <div class="container">
+            <div class="preview-content">
+                <div class="preview-text">
+                    <h2>Simplifying the Business Side of Tax Work.</h2>
+                    <p>Our intuitive dashboard gives you complete control over your tax management. Track deductions, monitor CIBIL scores, analyze spending patterns, and get AI-powered insights—all from one centralized platform.</p>
+                    <p>Smart automation handles the complex calculations while you focus on making informed financial decisions that optimize your tax liability.</p>
+                    <a href="{% url 'authentication:login' %}" class="btn-primary">Try Dashboard</a>
+                </div>
+                
+                <div class="preview-image">
+                    <div class="mock-dashboard">
+                        <div class="dashboard-header">
+                            <div class="dashboard-title">Tax Overview</div>
+                            <div class="dashboard-date">September 2025</div>
+                        </div>
+                        <div class="dashboard-stats">
+                            <div class="stat-card">
+                                <div class="stat-value">₹45,200</div>
+                                <div class="stat-label">Tax Savings</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">750</div>
+                                <div class="stat-label">CIBIL Score</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">₹3,21,000</div>
+                                <div class="stat-label">Deductions Found</div>
+                            </div>
+                        </div>
+                        <div style="height: 100px; background: linear-gradient(135deg, #10B981, #059669); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">
+                            📈 AI Analysis Complete
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section class="pricing" id="pricing">
+        <div class="container">
+            <div class="section-title">
+                <h2>Simple Plans for Serious Tax Optimization.</h2>
+                <p>Choose the plan that fits your needs. All plans include our core AI features and expert support.</p>
+            </div>
+
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <h3>Free Plan</h3>
+                    <div class="pricing-price">₹0</div>
+                    <ul class="pricing-features">
+                        <li>Basic tax calculations</li>
+                        <li>Simple document upload</li>
+                        <li>CIBIL score monitoring</li>
+                        <li>Email support</li>
+                        <li>Monthly reports</li>
+                    </ul>
+                    <a href="{% url 'authentication:login' %}" class="btn-primary">Get Started</a>
+                </div>
+
+                <div class="pricing-card featured">
+                    <div class="pricing-badge">Most Popular</div>
+                    <h3>Pro Plan</h3>
+                    <div class="pricing-price">₹999<span style="font-size: 1rem; color: #666;">/month</span></div>
+                    <ul class="pricing-features">
+                        <li>Advanced AI optimization</li>
+                        <li>Unlimited document processing</li>
+                        <li>CIBIL improvement strategies</li>
+                        <li>Priority support</li>
+                        <li>Weekly insights & alerts</li>
+                        <li>Advanced reporting</li>
+                    </ul>
+                    <a href="{% url 'authentication:login' %}" class="btn-primary">Start Free Trial</a>
+                </div>
+
+                <div class="pricing-card">
+                    <h3>Business Plan</h3>
+                    <div class="pricing-price">₹1,999<span style="font-size: 1rem; color: #666;">/month</span></div>
+                    <ul class="pricing-features">
+                        <li>Everything in Pro</li>
+                        <li>Multi-user access</li>
+                        <li>Custom integrations</li>
+                        <li>Dedicated account manager</li>
+                        <li>API access</li>
+                        <li>White-label options</li>
+                    </ul>
+                    <a href="{% url 'authentication:login' %}" class="btn-primary">Contact Sales</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer" id="contact">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>TaxWise</h3>
+                    <p style="color: #9ca3af; line-height: 1.6; margin-top: 1rem;">
+                        Empowering individuals and businesses with AI-driven tax optimization and financial intelligence.
                     </p>
                 </div>
-            </div>
-
-            <div class="row">
-                <div class="col-md-4 mb-4">
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-brain"></i>
-                        </div>
-                        <h3>AI-Powered Analysis</h3>
-                        <p>Our advanced AI analyzes your financial data to identify optimal tax-saving opportunities you might miss.</p>
-                    </div>
+                <div class="footer-section">
+                    <h3>Features</h3>
+                    <a href="#features">AI Tax Optimization</a>
+                    <a href="#features">Bank Analysis</a>
+                    <a href="#features">CIBIL Advisor</a>
+                    <a href="#dashboard">Smart Dashboard</a>
                 </div>
-
-                <div class="col-md-4 mb-4">
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                        <h3>Smart Recommendations</h3>
-                        <p>Get personalized tax strategies and investment recommendations tailored to your unique financial situation.</p>
-                    </div>
+                <div class="footer-section">
+                    <h3>Company</h3>
+                    <a href="#about">About Us</a>
+                    <a href="#pricing">Pricing</a>
+                    <a href="#contact">Contact</a>
+                    <a href="#blog">Blog</a>
                 </div>
-
-                <div class="col-md-4 mb-4">
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-shield-alt"></i>
-                        </div>
-                        <h3>Bank-Level Security</h3>
-                        <p>Your financial data is protected with enterprise-grade encryption and security measures.</p>
-                    </div>
+                <div class="footer-section">
+                    <h3>Support</h3>
+                    <a href="#help">Help Center</a>
+                    <a href="#docs">Documentation</a>
+                    <a href="#privacy">Privacy Policy</a>
+                    <a href="#terms">Terms of Service</a>
                 </div>
             </div>
-
-            <div class="row">
-                <div class="col-md-4 mb-4">
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-file-upload"></i>
-                        </div>
-                        <h3>Easy Upload</h3>
-                        <p>Simply upload your bank statements and tax documents - our AI does the heavy lifting.</p>
-                    </div>
-                </div>
-
-                <div class="col-md-4 mb-4">
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-clock"></i>
-                        </div>
-                        <h3>Real-Time Processing</h3>
-                        <p>Get instant analysis and recommendations without waiting for manual review.</p>
-                    </div>
-                </div>
-
-                <div class="col-md-4 mb-4">
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-mobile-alt"></i>
-                        </div>
-                        <h3>Mobile Friendly</h3>
-                        <p>Access your tax optimization dashboard anywhere, anytime from any device.</p>
-                    </div>
-                </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 TaxWise. All rights reserved. Made with 💚 for smarter tax management.</p>
             </div>
         </div>
-    </section>
+    </footer>
 
-    <!-- Stats Section -->
-    <section class="stats">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-3 col-sm-6">
-                    <div class="stat-item">
-                        <span class="stat-number">$50K+</span>
-                        <div class="stat-label">Average Tax Savings</div>
-                    </div>
-                </div>
-                <div class="col-md-3 col-sm-6">
-                    <div class="stat-item">
-                        <span class="stat-number">10K+</span>
-                        <div class="stat-label">Happy Users</div>
-                    </div>
-                </div>
-                <div class="col-md-3 col-sm-6">
-                    <div class="stat-item">
-                        <span class="stat-number">99.9%</span>
-                        <div class="stat-label">Accuracy Rate</div>
-                    </div>
-                </div>
-                <div class="col-md-3 col-sm-6">
-                    <div class="stat-item">
-                        <span class="stat-number">24/7</span>
-                        <div class="stat-label">AI Support</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- CTA Section -->
-    <section class="cta-section">
-        <div class="container">
-            <h2>Ready to Optimize Your Taxes?</h2>
-            <p>
-                Join thousands of users who have already saved money with TaxWise AI. 
-                Start your journey to smarter tax planning today.
-            </p>
-            
-            <div>
-                <a href="{% url 'login' %}" class="btn-hero primary">
-                    <i class="fas fa-user-plus"></i> Sign Up Now
-                </a>
-                <a href="{% url 'login' %}" class="btn-hero secondary">
-                    <i class="fas fa-sign-in-alt"></i> Login
-                </a>
-            </div>
-            
-            <div style="margin-top: 2rem; font-size: 0.9rem; opacity: 0.8;">
-                <i class="fas fa-credit-card"></i> No credit card required • 
-                <i class="fas fa-times-circle"></i> No commitment • 
-                <i class="fas fa-rocket"></i> Start in 60 seconds
-            </div>
-        </div>
-    </section>
-
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- Smooth Scrolling -->
+    <!-- Smooth Scrolling Script -->
     <script>
+        // Smooth scrolling for anchor links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
-                document.querySelector(this.getAttribute('href')).scrollIntoView({
-                    behavior: 'smooth'
-                });
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
             });
         });
 
-        // Add animation on scroll
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
-
-        const observer = new IntersectionObserver(function(entries) {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.style.opacity = '1';
-                    entry.target.style.transform = 'translateY(0)';
-                }
-            });
-        }, observerOptions);
-
-        document.querySelectorAll('.feature-card, .stat-item').forEach(el => {
-            el.style.opacity = '0';
-            el.style.transform = 'translateY(20px)';
-            el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-            observer.observe(el);
+        // Header scroll effect
+        window.addEventListener('scroll', function() {
+            const header = document.querySelector('.header');
+            if (window.scrollY > 100) {
+                header.style.background = 'rgba(255, 255, 255, 0.98)';
+            } else {
+                header.style.background = 'rgba(255, 255, 255, 0.95)';
+            }
         });
     </script>
 </body>
