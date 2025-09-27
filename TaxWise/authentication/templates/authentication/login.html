@@ -1,35 +1,110 @@
 {% extends 'authentication/base.html' %}
 
-{% block title %}Login - TaxWise Google OAuth Demo{% endblock %}
+{% block title %}Login - TaxWise AI{% endblock %}
 
-{% block header %}Login with Google{% endblock %}
+{% block header %}Login to TaxWise AI{% endblock %}
 
 {% block content %}
     <div class="status info">
-        <h3>🔐 Google OAuth2 Login</h3>
-        <p>Click the button below to authenticate with your Google account.</p>
+        <h3>🔐 Welcome Back to TaxWise AI</h3>
+        <p>Sign in to access your AI-powered tax optimization dashboard.</p>
     </div>
 
-    <div style="text-align: center; margin: 40px 0;">
-        <a href="{% url 'social:begin' 'google-oauth2' %}" class="btn btn-google">
-            🔍 Login with Google
+    <!-- Email/Password Login Form -->
+    <div style="background-color: #f8f9fa; padding: 25px; border-radius: 10px; margin: 20px 0;">
+        <h4 style="color: #1e40af; margin-bottom: 15px;">
+            <i class="fas fa-envelope"></i> Sign in with Email & Password
+        </h4>
+        
+        <form method="post" style="max-width: 400px;">
+            {% csrf_token %}
+            
+            <div style="margin-bottom: 15px;">
+                <label for="email" style="display: block; font-weight: 600; margin-bottom: 5px; color: #374151;">
+                    Email Address
+                </label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    required 
+                    style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 16px; transition: border-color 0.3s ease;"
+                    placeholder="your.email@example.com"
+                    onfocus="this.style.borderColor='#3b82f6'"
+                    onblur="this.style.borderColor='#e5e7eb'"
+                />
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label for="password" style="display: block; font-weight: 600; margin-bottom: 5px; color: #374151;">
+                    Password
+                </label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password" 
+                    required 
+                    style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 16px; transition: border-color 0.3s ease;"
+                    placeholder="Enter your password"
+                    onfocus="this.style.borderColor='#3b82f6'"
+                    onblur="this.style.borderColor='#e5e7eb'"
+                />
+            </div>
+            
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-bottom: 10px;">
+                <i class="fas fa-sign-in-alt"></i> Sign In
+            </button>
+        </form>
+        
+        <div style="text-align: center; margin-top: 15px;">
+            <small style="color: #6b7280;">
+                <i class="fas fa-info-circle"></i> 
+                Use the same email and password from your Google account
+            </small>
+        </div>
+    </div>
+
+    <!-- Divider -->
+    <div style="text-align: center; margin: 30px 0;">
+        <div style="display: inline-flex; align-items: center; gap: 15px;">
+            <hr style="width: 100px; border: 1px solid #e5e7eb;">
+            <span style="color: #6b7280; font-weight: 500;">OR</span>
+            <hr style="width: 100px; border: 1px solid #e5e7eb;">
+        </div>
+    </div>
+
+    <!-- Google OAuth Login -->
+    <div style="text-align: center; margin: 30px 0;">
+        <h4 style="color: #1e40af; margin-bottom: 15px;">
+            <i class="fab fa-google"></i> Sign in with Google OAuth
+        </h4>
+        <a href="{% url 'social:begin' 'google-oauth2' %}?next=/tax-ai/" class="btn btn-google" style="padding: 12px 30px;">
+            <i class="fab fa-google"></i> Continue with Google
+        </a>
+        <div style="margin-top: 10px;">
+            <small style="color: #6b7280;">
+                <i class="fas fa-shield-alt"></i> 
+                Secure authentication via Google
+            </small>
+        </div>
+    </div>
+
+    <!-- Back to Landing -->
+    <div style="text-align: center; margin: 30px 0;">
+        <a href="{% url 'landing' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Home
         </a>
     </div>
 
-    <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0;">
-        <h4>⚠️ Important Setup Notes:</h4>
-        <ul>
-            <li>Make sure your <code>.env</code> file contains valid Google OAuth2 credentials</li>
-            <li>Ensure your Google Cloud Console project has the OAuth2 API enabled</li>
-            <li>Add your domain (e.g., <code>http://127.0.0.1:8000</code>) to authorized origins</li>
-            <li>Add callback URL: <code>http://127.0.0.1:8000/auth/complete/google-oauth2/</code></li>
+    <!-- Setup Information -->
+    <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 20px; border-radius: 8px; margin: 30px 0;">
+        <h4 style="color: #92400e;">
+            <i class="fas fa-exclamation-triangle"></i> First Time Setup
+        </h4>
+        <ul style="margin: 10px 0; color: #92400e;">
+            <li><strong>New users:</strong> Use "Continue with Google" for first-time registration</li>
+            <li><strong>Returning users:</strong> Use either login method with your Google credentials</li>
+            <li><strong>Password:</strong> After Google OAuth, a password will be generated for email login</li>
         </ul>
-    </div>
-
-    <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px;">
-        <h4>📋 Required .env Variables:</h4>
-        <pre style="background-color: #e9ecef; padding: 10px; border-radius: 3px;">
-SOCIAL_AUTH_GOOGLE_OAUTH2_KEY=your_google_client_id_here
-SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET=your_google_client_secret_here</pre>
     </div>
 {% endblock %}
