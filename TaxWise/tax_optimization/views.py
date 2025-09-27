@@ -47,8 +47,9 @@ from .tax_calculator.engine import tax_calculator
 from .utils.file_processor import process_bank_statement
 
 # Template Views for Frontend Pages
+@login_required
 def home(request):
-    """Enhanced home page with HTML template"""
+    """Enhanced home page with HTML template - requires login"""
     if request.headers.get('Accept') == 'application/json':
         # Return JSON for API calls
         return JsonResponse({
@@ -65,12 +66,14 @@ def home(request):
         # Return HTML template for browser requests
         return render(request, 'tax_optimization/dashboard.html')
 
+@login_required
 def calculator_page(request):
-    """Tax calculator page"""
+    """Tax calculator page - requires login"""
     return render(request, 'tax_optimization/calculator.html')
 
+@login_required
 def recommendations_page(request):
-    """Tax recommendations page"""
+    """Tax recommendations page - requires login"""
     return render(request, 'tax_optimization/recommendations.html')
 
 # Simple Backward Compatibility Endpoints

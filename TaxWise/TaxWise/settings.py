@@ -146,8 +146,8 @@ AUTHENTICATION_BACKENDS = [
 
 # Social Auth URLs
 LOGIN_URL = '/auth/login/'
-LOGIN_REDIRECT_URL = '/auth/profile/'
-LOGOUT_REDIRECT_URL = '/auth/'
+LOGIN_REDIRECT_URL = '/tax-ai/'  # Redirect to tax AI after login
+LOGOUT_REDIRECT_URL = '/'  # Redirect to landing page after logout
 # Time zone, etc
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
