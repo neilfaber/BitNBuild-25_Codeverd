@@ -1,0 +1,1 @@
+# Tax Optimization Django App Configuration

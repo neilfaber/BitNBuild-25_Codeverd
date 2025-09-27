@@ -1,0 +1,208 @@
+{% extends 'tax_optimization/base.html' %}
+
+{% block title %}TaxWise - AI Tax Optimization Dashboard{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card">
+            <div class="section-header text-center">
+                <h1><i class="fas fa-robot me-3"></i>TaxWise AI Tax Optimization Engine</h1>
+                <p class="lead mb-0">Intelligent tax planning with AI-powered insights</p>
+            </div>
+            <div class="card-body text-center">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="p-3">
+                            <i class="fas fa-chart-line fa-3x text-success mb-3"></i>
+                            <h4>Smart Analysis</h4>
+                            <p>AI-powered income and expense categorization</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3">
+                            <i class="fas fa-balance-scale fa-3x text-warning mb-3"></i>
+                            <h4>Regime Comparison</h4>
+                            <p>Old vs New tax regime optimization</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3">
+                            <i class="fas fa-lightbulb fa-3x text-info mb-3"></i>
+                            <h4>Personalized Tips</h4>
+                            <p>Tailored tax-saving recommendations</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-md-4 mb-3">
+        <div class="card h-100 income-section">
+            <div class="card-header bg-success text-white">
+                <h5><i class="fas fa-plus-circle me-2"></i>Income Management</h5>
+            </div>
+            <div class="card-body">
+                <p>Categorize and manage your income sources:</p>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-success me-2"></i>Salary Income</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Business Income</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Investment Returns</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Other Income</li>
+                </ul>
+                <a href="{% url 'tax_optimization:calculator' %}" class="btn btn-success">
+                    <i class="fas fa-arrow-right me-2"></i>Start Calculator
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="card h-100 expense-section">
+            <div class="card-header bg-warning text-white">
+                <h5><i class="fas fa-minus-circle me-2"></i>Expense Tracking</h5>
+            </div>
+            <div class="card-body">
+                <p>Track and categorize your expenses:</p>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-warning me-2"></i>Housing & Utilities</li>
+                    <li><i class="fas fa-check text-warning me-2"></i>Medical Expenses</li>
+                    <li><i class="fas fa-check text-warning me-2"></i>Education Costs</li>
+                    <li><i class="fas fa-check text-warning me-2"></i>Insurance Premiums</li>
+                </ul>
+                <a href="{% url 'tax_optimization:calculator' %}" class="btn btn-warning">
+                    <i class="fas fa-chart-pie me-2"></i>Categorize Expenses
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="card h-100 deduction-section">
+            <div class="card-header bg-primary text-white">
+                <h5><i class="fas fa-receipt me-2"></i>Tax Deductions</h5>
+            </div>
+            <div class="card-body">
+                <p>Maximize your tax deductions:</p>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-primary me-2"></i>Section 80C (₹1.5L)</li>
+                    <li><i class="fas fa-check text-primary me-2"></i>Section 80D (₹25K)</li>
+                    <li><i class="fas fa-check text-primary me-2"></i>Section 80G (Donations)</li>
+                    <li><i class="fas fa-check text-primary me-2"></i>Section 24(b) (Home Loan)</li>
+                </ul>
+                <a href="{% url 'tax_optimization:recommendations' %}" class="btn btn-primary">
+                    <i class="fas fa-search me-2"></i>Find Deductions
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tax Regime Comparison Preview -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card tax-section">
+            <div class="card-header bg-danger text-white">
+                <h4><i class="fas fa-balance-scale me-2"></i>Tax Regime Comparison</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5 class="text-primary">Old Tax Regime</h5>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-arrow-right text-primary me-2"></i>Multiple deduction sections (80C, 80D, etc.)</li>
+                            <li><i class="fas fa-arrow-right text-primary me-2"></i>Standard deduction: ₹50,000</li>
+                            <li><i class="fas fa-arrow-right text-primary me-2"></i>Higher tax slabs with deductions</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h5 class="text-success">New Tax Regime (FY 2024-25)</h5>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-arrow-right text-success me-2"></i>Lower tax rates</li>
+                            <li><i class="fas fa-arrow-right text-success me-2"></i>Standard deduction: ₹75,000</li>
+                            <li><i class="fas fa-arrow-right text-success me-2"></i>Limited deductions available</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="text-center mt-3">
+                    <a href="{% url 'tax_optimization:calculator' %}" class="btn btn-danger btn-lg">
+                        <i class="fas fa-calculator me-2"></i>Compare Tax Regimes
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity / Quick Stats -->
+<div class="row">
+    <div class="col-md-3 mb-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-users fa-2x text-primary mb-3"></i>
+                <h4>1000+</h4>
+                <p class="text-muted">Happy Users</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-rupee-sign fa-2x text-success mb-3"></i>
+                <h4>₹50Cr+</h4>
+                <p class="text-muted">Tax Savings</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-chart-bar fa-2x text-warning mb-3"></i>
+                <h4>5000+</h4>
+                <p class="text-muted">Calculations</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-lightbulb fa-2x text-info mb-3"></i>
+                <h4>10k+</h4>
+                <p class="text-muted">Recommendations</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add smooth scrolling to all links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            document.querySelector(this.getAttribute('href')).scrollIntoView({
+                behavior: 'smooth'
+            });
+        });
+    });
+    
+    // Add hover effects to cards
+    document.querySelectorAll('.card').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+});
+</script>
+{% endblock %}
