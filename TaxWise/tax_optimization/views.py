@@ -827,26 +827,21 @@ def analyze_financial_data_for_cibil(request):
 
 # Smart Financial Data Ingestion Views
 
+@login_required
 def data_ingestion_upload(request):
     """Data ingestion upload page"""
     return render(request, 'data_ingestion_upload.html', {
         'title': 'Smart Financial Data Ingestion'
     })
 
+@login_required
 def data_ingestion_results(request, session_id):
     """Display results of data ingestion session"""
     try:
-        user = request.user if request.user.is_authenticated else None
-        if user:
-            ingestion_session = FinancialDataIngestion.objects.get(
-                session_id=session_id, 
-                user=user
-            )
-        else:
-            # For demo, allow any session
-            ingestion_session = FinancialDataIngestion.objects.get(
-                session_id=session_id
-            )
+        ingestion_session = FinancialDataIngestion.objects.get(
+            session_id=session_id, 
+            user=request.user
+        )
         
         # Get session statistics
         uploaded_files = ingestion_session.uploaded_files.all()
@@ -903,6 +898,7 @@ def data_ingestion_results(request, session_id):
         }, status=404)
 
 @csrf_exempt
+@login_required
 def api_create_ingestion_session(request):
     """API endpoint to create a new data ingestion session"""
     if request.method != 'POST':
@@ -914,38 +910,24 @@ def api_create_ingestion_session(request):
     try:
         data = json.loads(request.body)
         
-        # Get user or create a demo user
-        user = request.user if request.user.is_authenticated else None
-        if not user:
-            # For demo purposes, create a temporary session without user
-            session = FinancialDataIngestion.objects.create(
-                user_id=1,  # Use admin user or create a demo user
-                session_name=data.get('session_name', 'Demo Session'),
-                session_type=data.get('session_type', 'BULK_UPLOAD'),
-                auto_categorize=data.get('auto_categorize', True),
-                merge_duplicates=data.get('merge_duplicates', True),
-                create_patterns=data.get('create_patterns', True)
-            )
-        else:
-            # Create ingestion session
-            session = FinancialDataIngestion.objects.create(
-                user=user,
-                session_name=data.get('session_name', 'Untitled Session'),
-                session_type=data.get('session_type', 'BULK_UPLOAD'),
-                auto_categorize=data.get('auto_categorize', True),
-                merge_duplicates=data.get('merge_duplicates', True),
-                create_patterns=data.get('create_patterns', True)
-            )
+        # Create ingestion session
+        session = FinancialDataIngestion.objects.create(
+            user=request.user,
+            session_name=data.get('session_name', 'Untitled Session'),
+            session_type=data.get('session_type', 'BULK_UPLOAD'),
+            auto_categorize=data.get('auto_categorize', True),
+            merge_duplicates=data.get('merge_duplicates', True),
+            create_patterns=data.get('create_patterns', True)
+        )
         
         # Log audit entry
-        if user:
-            IngestionAuditLog.objects.create(
-                ingestion_session=session,
-                user=user,
-                action_type='PROCESSING_STARTED',
-                action_description=f'Started ingestion session: {session.session_name}',
-                was_successful=True
-            )
+        IngestionAuditLog.objects.create(
+            ingestion_session=session,
+            user=request.user,
+            action_type='PROCESSING_STARTED',
+            action_description=f'Started ingestion session: {session.session_name}',
+            was_successful=True
+        )
         
         return JsonResponse({
             'status': 'success',
@@ -961,6 +943,7 @@ def api_create_ingestion_session(request):
         }, status=500)
 
 @csrf_exempt
+@login_required
 def api_upload_file(request):
     """API endpoint to upload files for processing"""
     if request.method != 'POST':
@@ -981,17 +964,10 @@ def api_upload_file(request):
         
         # Get ingestion session
         try:
-            user = request.user if request.user.is_authenticated else None
-            if user:
-                session = FinancialDataIngestion.objects.get(
-                    session_id=session_id,
-                    user=user
-                )
-            else:
-                # For demo, allow any session
-                session = FinancialDataIngestion.objects.get(
-                    session_id=session_id
-                )
+            session = FinancialDataIngestion.objects.get(
+                session_id=session_id,
+                user=request.user
+            )
         except FinancialDataIngestion.DoesNotExist:
             return JsonResponse({
                 'status': 'error',
@@ -1057,7 +1033,7 @@ def api_upload_file(request):
                 for pattern_data in category_patterns:
                     pattern = TransactionPattern.objects.create(
                         ingestion_session=session,
-                        user_id=user.id if user else 1,  # Use admin user for demo
+                        user=request.user,
                         pattern_type=map_category_to_pattern_type(category),
                         pattern_name=f"{category} - {pattern_data['description_pattern']}",
                         pattern_description=f"Recurring {category.lower()} pattern",
@@ -1092,16 +1068,15 @@ def api_upload_file(request):
             session.save()
             
             # Log audit entry
-            if user:
-                IngestionAuditLog.objects.create(
-                    ingestion_session=session,
-                    user=user,
-                    action_type='FILE_UPLOADED',
-                    action_description=f'Processed file: {uploaded_file.name}',
-                    affected_object_type='IngestionFileUpload',
-                    affected_object_id=str(file_upload.id),
-                    was_successful=True
-                )
+            IngestionAuditLog.objects.create(
+                ingestion_session=session,
+                user=request.user,
+                action_type='FILE_UPLOADED',
+                action_description=f'Processed file: {uploaded_file.name}',
+                affected_object_type='IngestionFileUpload',
+                affected_object_id=str(file_upload.id),
+                was_successful=True
+            )
             
             return JsonResponse({
                 'status': 'success',
@@ -1131,20 +1106,14 @@ def api_upload_file(request):
             'message': 'Upload failed: ' + str(e)
         }, status=500)
 
+@login_required
 def api_session_status(request, session_id):
     """API endpoint to get ingestion session status"""
     try:
-        user = request.user if request.user.is_authenticated else None
-        if user:
-            session = FinancialDataIngestion.objects.get(
-                session_id=session_id,
-                user=user
-            )
-        else:
-            # For demo, allow any session
-            session = FinancialDataIngestion.objects.get(
-                session_id=session_id
-            )
+        session = FinancialDataIngestion.objects.get(
+            session_id=session_id,
+            user=request.user
+        )
         
         # Calculate processing progress
         total_files = session.total_files_uploaded
@@ -1190,6 +1159,7 @@ def api_session_status(request, session_id):
         }, status=500)
 
 @csrf_exempt
+@login_required
 def api_confirm_transactions(request):
     """API endpoint to confirm processed transactions"""
     if request.method != 'POST':
@@ -1209,23 +1179,16 @@ def api_confirm_transactions(request):
             }, status=400)
         
         # Get extracted transactions
-        user = request.user if request.user.is_authenticated else None
-        if user:
-            extracted_transactions = ExtractedTransaction.objects.filter(
-                id__in=transaction_ids,
-                ingestion_session__user=user
-            )
-        else:
-            # For demo, allow any transactions
-            extracted_transactions = ExtractedTransaction.objects.filter(
-                id__in=transaction_ids
-            )
+        extracted_transactions = ExtractedTransaction.objects.filter(
+            id__in=transaction_ids,
+            ingestion_session__user=request.user
+        )
         
         confirmed_count = 0
         for extracted_trans in extracted_transactions:
             # Create final financial transaction
             final_transaction = FinancialTransaction.objects.create(
-                user_id=user.id if user else 1,  # Use admin user for demo
+                user=request.user,
                 date=extracted_trans.extracted_date,
                 amount=extracted_trans.extracted_amount,
                 description=extracted_trans.extracted_description,
@@ -1256,6 +1219,7 @@ def api_confirm_transactions(request):
         }, status=500)
 
 @csrf_exempt
+@login_required
 def api_confirm_patterns(request):
     """API endpoint to confirm detected transaction patterns"""
     if request.method != 'POST':
@@ -1275,17 +1239,10 @@ def api_confirm_patterns(request):
             }, status=400)
         
         # Get and confirm patterns
-        user = request.user if request.user.is_authenticated else None
-        if user:
-            patterns = TransactionPattern.objects.filter(
-                pattern_id__in=pattern_ids,
-                user=user
-            )
-        else:
-            # For demo, allow any patterns
-            patterns = TransactionPattern.objects.filter(
-                pattern_id__in=pattern_ids
-            )
+        patterns = TransactionPattern.objects.filter(
+            pattern_id__in=pattern_ids,
+            user=request.user
+        )
         
         confirmed_count = 0
         for pattern in patterns:

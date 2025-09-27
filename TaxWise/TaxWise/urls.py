@@ -16,10 +16,18 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
+from authentication.views import landing_page
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('', landing_page, name='landing'),  # Landing page as root
     path('auth/', include('social_django.urls', namespace='social')),
     path('auth/', include('authentication.urls')),
-    path('', include('tax_optimization.urls')),
+    path('tax-ai/', include('tax_optimization.urls')),  # Protected tax AI routes
+    path('', include('bank_analyzer.urls')),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
