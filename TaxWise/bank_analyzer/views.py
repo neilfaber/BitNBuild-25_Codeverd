@@ -10,7 +10,7 @@ from .models import UploadedPDF
 # ============================================================
 # CONFIGURE GEMINI API
 # ============================================================
-genai.configure(api_key="AIzaSyDtRhEngeP-bsHoDv_ni-h-sKsbzPwMIds")
+genai.configure(api_key="AIzaSyBJIV6SFqxNLCHagY2l8QLJ1DJ_QDdR3MA")
 
 # ============================================================
 # FUNCTION TO ANALYZE PDF WITH GEMINI
