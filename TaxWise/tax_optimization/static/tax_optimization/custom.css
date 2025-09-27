@@ -1,0 +1,203 @@
+/* TaxWise Custom Styles */
+
+/* Enhanced Card Animations */
+.card-hover-effect {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.card-hover-effect:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+}
+
+/* Gradient Backgrounds */
+.gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.gradient-success {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.gradient-warning {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.gradient-info {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+/* Custom Input Styling */
+.form-control-lg {
+    padding: 1rem 1.5rem;
+    font-size: 1.125rem;
+    border-radius: 0.5rem;
+}
+
+/* Progress Animations */
+.progress-animated .progress-bar {
+    animation: progressAnimation 2s ease-in-out;
+}
+
+@keyframes progressAnimation {
+    0% { width: 0%; }
+    100% { width: var(--progress-width); }
+}
+
+/* Recommendation Cards */
+.recommendation-highlight {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 15px;
+    padding: 20px;
+    color: white;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+}
+
+/* Calculator Specific Styles */
+.income-highlight {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    color: white;
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.deduction-highlight {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    font-weight: bold;
+}
+
+/* Mobile Responsive Improvements */
+@media (max-width: 768px) {
+    .card {
+        margin-bottom: 1rem;
+    }
+    
+    .btn-lg {
+        padding: 0.75rem 1.5rem;
+        font-size: 1rem;
+    }
+    
+    .display-4 {
+        font-size: 2rem;
+    }
+    
+    .recommendation-card {
+        margin-bottom: 15px;
+    }
+}
+
+/* Loading States */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+/* Success/Error States */
+.success-pulse {
+    animation: successPulse 1s ease-in-out;
+}
+
+@keyframes successPulse {
+    0% { background-color: #28a745; }
+    50% { background-color: #20c997; }
+    100% { background-color: #28a745; }
+}
+
+/* Chart Container */
+.chart-container {
+    position: relative;
+    height: 400px;
+    margin: 20px 0;
+}
+
+/* Utility Classes */
+.text-shadow {
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.box-shadow-lg {
+    box-shadow: 0 1rem 3rem rgba(0,0,0,0.175);
+}
+
+.border-radius-lg {
+    border-radius: 1rem;
+}
+
+/* Icon Enhancements */
+.icon-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 15px;
+    font-size: 1.5rem;
+}
+
+.icon-circle.bg-primary { background: linear-gradient(135deg, #667eea, #764ba2); }
+.icon-circle.bg-success { background: linear-gradient(135deg, #11998e, #38ef7d); }
+.icon-circle.bg-warning { background: linear-gradient(135deg, #f093fb, #f5576c); }
+.icon-circle.bg-info { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+
+/* Section Dividers */
+.section-divider {
+    height: 4px;
+    background: linear-gradient(to right, #667eea, #764ba2);
+    border-radius: 2px;
+    margin: 30px 0;
+}
+
+/* Enhanced Tooltips */
+.tooltip-custom {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+}
+
+.tooltip-custom:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    white-space: nowrap;
+    z-index: 1000;
+}
+
+/* Print Styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    .card {
+        border: 1px solid #ddd !important;
+        box-shadow: none !important;
+    }
+    
+    .btn {
+        display: none !important;
+    }
+}

@@ -1,0 +1,523 @@
+{% extends 'tax_optimization/base.html' %}
+
+{% block title %}Tax Recommendations - TaxWise{% endblock %}
+
+{% block content %}
+<!-- Recommendations Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="section-header text-center">
+                <h2><i class="fas fa-lightbulb me-3"></i>Personalized Tax Recommendations</h2>
+                <p class="lead mb-0">AI-powered tax-saving opportunities tailored to your profile</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Profile Setup -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h4><i class="fas fa-user-cog me-2"></i>Your Financial Profile</h4>
+            </div>
+            <div class="card-body">
+                <form id="profileForm">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Annual Income</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
+                                <input type="number" class="form-control" id="profileIncome" placeholder="800000" value="800000">
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Age Group</label>
+                            <select class="form-select" id="profileAge">
+                                <option value="young">18-30 years</option>
+                                <option value="middle" selected>31-50 years</option>
+                                <option value="senior">51-60 years</option>
+                                <option value="elderly">60+ years</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Employment Type</label>
+                            <select class="form-select" id="profileEmployment">
+                                <option value="salaried" selected>Salaried</option>
+                                <option value="business">Business Owner</option>
+                                <option value="freelancer">Freelancer</option>
+                                <option value="professional">Professional</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Family Status</label>
+                            <select class="form-select" id="profileFamily">
+                                <option value="single">Single</option>
+                                <option value="married" selected>Married</option>
+                                <option value="children">With Children</option>
+                                <option value="dependents">Senior Dependents</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-info">
+                            <i class="fas fa-sync-alt me-2"></i>Update Recommendations
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recommendations Dashboard -->
+<div class="row mb-4">
+    <!-- High Priority Recommendations -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h4><i class="fas fa-star me-2"></i>High Priority Recommendations</h4>
+            </div>
+            <div class="card-body" id="highPriorityRecommendations">
+                <!-- High priority recommendations will be loaded here -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Savings Summary -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header bg-warning text-white">
+                <h4><i class="fas fa-chart-bar me-2"></i>Savings Summary</h4>
+            </div>
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <h3 class="text-success" id="totalSavings">₹0</h3>
+                    <small>Potential Annual Savings</small>
+                </div>
+                <div class="mb-3">
+                    <h4 class="text-info" id="totalInvestment">₹0</h4>
+                    <small>Required Investment</small>
+                </div>
+                <div class="progress mb-3">
+                    <div class="progress-bar" id="savingsProgress" role="progressbar" style="width: 0%"></div>
+                </div>
+                <small id="savingsPercentage">0% of maximum savings achieved</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Medium Priority Recommendations -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4><i class="fas fa-list-ul me-2"></i>Additional Opportunities</h4>
+            </div>
+            <div class="card-body" id="mediumPriorityRecommendations">
+                <!-- Medium priority recommendations will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tax Sections Breakdown -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h4><i class="fas fa-chart-pie me-2"></i>Deduction Sections Utilization</h4>
+            </div>
+            <div class="card-body">
+                <canvas id="deductionChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Action Plan -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h4><i class="fas fa-tasks me-2"></i>Your Tax-Saving Action Plan</h4>
+            </div>
+            <div class="card-body" id="actionPlan">
+                <!-- Action plan will be generated here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Indicator -->
+<div id="recommendationsLoading" class="text-center">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading recommendations...</span>
+    </div>
+    <p class="mt-2">Generating personalized recommendations...</p>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let deductionChart = null;
+
+// Sample recommendations data structure
+const recommendationsData = {
+    high: [
+        {
+            title: "Invest in ELSS Mutual Funds",
+            description: "Invest up to ₹1,50,000 in Equity Linked Savings Scheme (ELSS) mutual funds to get tax deduction under Section 80C with only 3-year lock-in period.",
+            section: "80C",
+            maxAmount: 150000,
+            potentialSavings: 46500, // 31% of 1.5L
+            investmentRequired: 150000,
+            priority: "HIGH",
+            difficulty: "Easy",
+            timeline: "Immediate",
+            tips: [
+                "Choose funds with good 5-year track record",
+                "Consider SIP for better averaging",
+                "Diversify across 2-3 good ELSS funds"
+            ]
+        },
+        {
+            title: "Health Insurance Premium",
+            description: "Purchase comprehensive health insurance for self and family. Premium paid qualifies for deduction under Section 80D up to ₹25,000.",
+            section: "80D",
+            maxAmount: 25000,
+            potentialSavings: 7750, // 31% of 25K
+            investmentRequired: 25000,
+            priority: "HIGH",
+            difficulty: "Easy",
+            timeline: "Before March 31",
+            tips: [
+                "Include parents for additional ₹25,000 deduction",
+                "Choose cashless network hospitals",
+                "Consider critical illness cover"
+            ]
+        }
+    ],
+    medium: [
+        {
+            title: "Public Provident Fund (PPF)",
+            description: "Open PPF account and invest up to ₹1.5L annually. Offers triple tax benefits - deduction, tax-free growth, and tax-free maturity.",
+            section: "80C",
+            maxAmount: 150000,
+            potentialSavings: 46500,
+            investmentRequired: 150000,
+            priority: "MEDIUM",
+            difficulty: "Easy",
+            timeline: "Long-term",
+            tips: [
+                "15-year lock-in period",
+                "Currently offers 7.1% interest",
+                "Can extend in blocks of 5 years"
+            ]
+        },
+        {
+            title: "Home Loan Interest Deduction",
+            description: "If you have a home loan, claim interest deduction under Section 24(b) up to ₹2 lakhs for self-occupied property.",
+            section: "24(b)",
+            maxAmount: 200000,
+            potentialSavings: 62000, // 31% of 2L
+            investmentRequired: 0,
+            priority: "MEDIUM",
+            difficulty: "Easy",
+            timeline: "Ongoing",
+            tips: [
+                "Keep all EMI receipts",
+                "Interest component decreases over time",
+                "Principal repayment qualifies under 80C"
+            ]
+        },
+        {
+            title: "Charitable Donations",
+            description: "Make donations to eligible charitable organizations to claim deduction under Section 80G. 50% or 100% of donation amount is deductible.",
+            section: "80G",
+            maxAmount: null,
+            potentialSavings: 15500, // Estimated 31% of 50K donation
+            investmentRequired: 50000,
+            priority: "MEDIUM",
+            difficulty: "Easy",
+            timeline: "Before March 31",
+            tips: [
+                "Verify 80G eligibility of organization",
+                "Get proper receipts",
+                "Some donations offer 100% deduction"
+            ]
+        }
+    ]
+};
+
+// Calculate personalized recommendations based on profile
+function calculatePersonalizedRecommendations() {
+    const income = parseFloat(document.getElementById('profileIncome').value) || 800000;
+    const age = document.getElementById('profileAge').value;
+    const employment = document.getElementById('profileEmployment').value;
+    const family = document.getElementById('profileFamily').value;
+    
+    // Adjust recommendations based on profile
+    let recommendations = JSON.parse(JSON.stringify(recommendationsData)); // Deep copy
+    
+    // Adjust based on income
+    const taxRate = income > 1000000 ? 0.30 : income > 500000 ? 0.20 : 0.05;
+    
+    recommendations.high.forEach(rec => {
+        rec.potentialSavings = rec.investmentRequired * taxRate * 1.04; // Including cess
+    });
+    
+    recommendations.medium.forEach(rec => {
+        if (rec.investmentRequired > 0) {
+            rec.potentialSavings = rec.investmentRequired * taxRate * 1.04;
+        }
+    });
+    
+    // Add age-specific recommendations
+    if (age === 'elderly') {
+        recommendations.high.push({
+            title: "Senior Citizen Health Insurance",
+            description: "Additional ₹30,000 deduction available for health insurance of senior citizen parents under Section 80D.",
+            section: "80D",
+            maxAmount: 30000,
+            potentialSavings: 30000 * taxRate * 1.04,
+            investmentRequired: 30000,
+            priority: "HIGH",
+            difficulty: "Easy",
+            timeline: "Before March 31",
+            tips: ["Covers parents above 60 years", "Separate from your own health insurance limit"]
+        });
+    }
+    
+    return recommendations;
+}
+
+// Display recommendations
+function displayRecommendations(recommendations) {
+    displayHighPriorityRecommendations(recommendations.high);
+    displayMediumPriorityRecommendations(recommendations.medium);
+    updateSavingsSummary(recommendations);
+    updateDeductionChart(recommendations);
+    generateActionPlan(recommendations);
+}
+
+// Display high priority recommendations
+function displayHighPriorityRecommendations(highPriority) {
+    const container = document.getElementById('highPriorityRecommendations');
+    container.innerHTML = '';
+    
+    highPriority.forEach(rec => {
+        const recCard = `
+            <div class="recommendation-card mb-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <h5><i class="fas fa-star me-2"></i>${rec.title}</h5>
+                        <p class="mb-2">${rec.description}</p>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <small><strong>Tax Section:</strong> ${rec.section}</small><br>
+                                <small><strong>Max Amount:</strong> ${rec.maxAmount ? formatCurrency(rec.maxAmount) : 'No limit'}</small><br>
+                                <small><strong>Investment:</strong> ${formatCurrency(rec.investmentRequired)}</small>
+                            </div>
+                            <div class="col-md-6">
+                                <small><strong>Potential Savings:</strong> <span class="text-warning">${formatCurrency(rec.potentialSavings)}</span></small><br>
+                                <small><strong>Difficulty:</strong> ${rec.difficulty}</small><br>
+                                <small><strong>Timeline:</strong> ${rec.timeline}</small>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <h6>Pro Tips:</h6>
+                            <ul class="mb-0">
+                                ${rec.tips.map(tip => `<li>${tip}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <div class="badge bg-success fs-6 p-2">
+                            Save<br>${formatCurrency(rec.potentialSavings)}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        container.innerHTML += recCard;
+    });
+}
+
+// Display medium priority recommendations
+function displayMediumPriorityRecommendations(mediumPriority) {
+    const container = document.getElementById('mediumPriorityRecommendations');
+    container.innerHTML = '';
+    
+    mediumPriority.forEach(rec => {
+        const recCard = `
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h6><i class="fas fa-lightbulb me-2 text-primary"></i>${rec.title}</h6>
+                            <p class="mb-1 text-muted">${rec.description}</p>
+                            <small><strong>Section ${rec.section}</strong> | Savings: <span class="text-success">${formatCurrency(rec.potentialSavings)}</span></small>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="badge bg-primary">${rec.difficulty}</div>
+                            <div class="mt-1">
+                                <small class="text-muted">${rec.timeline}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        container.innerHTML += recCard;
+    });
+}
+
+// Update savings summary
+function updateSavingsSummary(recommendations) {
+    const totalSavings = [...recommendations.high, ...recommendations.medium]
+        .reduce((sum, rec) => sum + rec.potentialSavings, 0);
+    
+    const totalInvestment = [...recommendations.high, ...recommendations.medium]
+        .reduce((sum, rec) => sum + rec.investmentRequired, 0);
+    
+    document.getElementById('totalSavings').textContent = formatCurrency(totalSavings);
+    document.getElementById('totalInvestment').textContent = formatCurrency(totalInvestment);
+    
+    // Calculate progress (assuming max possible savings is around 2L for middle class)
+    const maxPossibleSavings = 200000;
+    const progressPercentage = Math.min((totalSavings / maxPossibleSavings) * 100, 100);
+    
+    document.getElementById('savingsProgress').style.width = `${progressPercentage}%`;
+    document.getElementById('savingsPercentage').textContent = 
+        `${progressPercentage.toFixed(1)}% of optimal tax savings achieved`;
+}
+
+// Update deduction chart
+function updateDeductionChart(recommendations) {
+    const ctx = document.getElementById('deductionChart').getContext('2d');
+    
+    if (deductionChart) {
+        deductionChart.destroy();
+    }
+    
+    // Group by sections
+    const sections = {};
+    [...recommendations.high, ...recommendations.medium].forEach(rec => {
+        if (!sections[rec.section]) {
+            sections[rec.section] = { savings: 0, potential: 0 };
+        }
+        sections[rec.section].savings += rec.potentialSavings;
+        sections[rec.section].potential += (rec.maxAmount || rec.investmentRequired);
+    });
+    
+    const labels = Object.keys(sections);
+    const savingsData = labels.map(section => sections[section].savings);
+    const potentialData = labels.map(section => sections[section].potential * 0.31); // Approx tax rate
+    
+    deductionChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels.map(label => `Section ${label}`),
+            datasets: [{
+                data: savingsData,
+                backgroundColor: ['#27ae60', '#3498db', '#f39c12', '#e74c3c', '#9b59b6'],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((context.parsed / total) * 100).toFixed(1);
+                            return `${context.label}: ₹${context.parsed.toLocaleString()} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Generate action plan
+function generateActionPlan(recommendations) {
+    const container = document.getElementById('actionPlan');
+    const allRecs = [...recommendations.high, ...recommendations.medium];
+    
+    // Sort by potential savings
+    allRecs.sort((a, b) => b.potentialSavings - a.potentialSavings);
+    
+    let actionPlanHtml = `
+        <div class="alert alert-info">
+            <h5><i class="fas fa-info-circle me-2"></i>Quick Start Guide</h5>
+            <p>Follow this prioritized action plan to maximize your tax savings:</p>
+        </div>
+    `;
+    
+    allRecs.forEach((rec, index) => {
+        const urgency = rec.timeline.includes('March') ? 'urgent' : 'normal';
+        const badgeColor = urgency === 'urgent' ? 'danger' : 'success';
+        
+        actionPlanHtml += `
+            <div class="card mb-2">
+                <div class="card-body py-2">
+                    <div class="d-flex align-items-center">
+                        <div class="badge bg-primary me-3">${index + 1}</div>
+                        <div class="flex-grow-1">
+                            <strong>${rec.title}</strong>
+                            <small class="text-muted ms-2">Save ${formatCurrency(rec.potentialSavings)}</small>
+                        </div>
+                        <div>
+                            <span class="badge bg-${badgeColor}">${rec.timeline}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = actionPlanHtml;
+}
+
+// Profile form submission
+document.getElementById('profileForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Show loading
+    document.getElementById('recommendationsLoading').style.display = 'block';
+    
+    // Hide other sections temporarily
+    document.querySelectorAll('.card').forEach(card => {
+        if (!card.querySelector('#profileForm')) {
+            card.style.opacity = '0.5';
+        }
+    });
+    
+    // Simulate processing time
+    setTimeout(() => {
+        const recommendations = calculatePersonalizedRecommendations();
+        displayRecommendations(recommendations);
+        
+        // Show sections
+        document.querySelectorAll('.card').forEach(card => {
+            card.style.opacity = '1';
+        });
+        
+        document.getElementById('recommendationsLoading').style.display = 'none';
+        showSuccess('Recommendations updated based on your profile!');
+    }, 2000);
+});
+
+// Initialize with default recommendations
+document.addEventListener('DOMContentLoaded', function() {
+    const recommendations = calculatePersonalizedRecommendations();
+    displayRecommendations(recommendations);
+    document.getElementById('recommendationsLoading').style.display = 'none';
+});
+</script>
+{% endblock %}

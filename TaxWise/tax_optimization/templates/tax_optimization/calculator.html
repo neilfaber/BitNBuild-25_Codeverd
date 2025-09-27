@@ -1,0 +1,473 @@
+{% extends 'tax_optimization/base.html' %}
+
+{% block title %}Tax Calculator - TaxWise{% endblock %}
+
+{% block content %}
+<!-- Calculator Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="section-header text-center">
+                <h2><i class="fas fa-calculator me-3"></i>AI Tax Calculator</h2>
+                <p class="lead mb-0">Comprehensive tax calculation with regime comparison</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Calculator Form -->
+<form id="taxCalculatorForm">
+    <div class="row">
+        <!-- Income Section -->
+        <div class="col-lg-6 mb-4">
+            <div class="card income-section h-100">
+                <div class="card-header bg-success text-white">
+                    <h4><i class="fas fa-plus-circle me-2"></i>Income Sources</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Salary Income -->
+                    <div class="mb-3">
+                        <label class="form-label"><i class="fas fa-briefcase me-2"></i>Salary Income (Annual)</label>
+                        <div class="input-group">
+                            <span class="input-group-text">₹</span>
+                            <input type="number" class="form-control" id="salaryIncome" placeholder="800000" value="800000">
+                        </div>
+                    </div>
+                    
+                    <!-- Business Income -->
+                    <div class="mb-3">
+                        <label class="form-label"><i class="fas fa-store me-2"></i>Business/Professional Income</label>
+                        <div class="input-group">
+                            <span class="input-group-text">₹</span>
+                            <input type="number" class="form-control" id="businessIncome" placeholder="0" value="0">
+                        </div>
+                    </div>
+                    
+                    <!-- Capital Gains -->
+                    <div class="mb-3">
+                        <label class="form-label"><i class="fas fa-chart-line me-2"></i>Capital Gains</label>
+                        <div class="input-group">
+                            <span class="input-group-text">₹</span>
+                            <input type="number" class="form-control" id="capitalGains" placeholder="0" value="0">
+                        </div>
+                    </div>
+                    
+                    <!-- Other Income -->
+                    <div class="mb-3">
+                        <label class="form-label"><i class="fas fa-coins me-2"></i>Other Income</label>
+                        <div class="input-group">
+                            <span class="input-group-text">₹</span>
+                            <input type="number" class="form-control" id="otherIncome" placeholder="0" value="0">
+                        </div>
+                    </div>
+                    
+                    <!-- Total Income Display -->
+                    <div class="savings-highlight">
+                        <strong>Total Annual Income: <span id="totalIncome">₹8,00,000</span></strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Deductions Section -->
+        <div class="col-lg-6 mb-4">
+            <div class="card deduction-section h-100">
+                <div class="card-header bg-primary text-white">
+                    <h4><i class="fas fa-receipt me-2"></i>Tax Deductions</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Standard Deduction -->
+                    <div class="mb-3">
+                        <label class="form-label"><i class="fas fa-user-tie me-2"></i>Standard Deduction</label>
+                        <div class="input-group">
+                            <span class="input-group-text">₹</span>
+                            <input type="number" class="form-control" id="standardDeduction" placeholder="75000" value="75000" readonly>
+                        </div>
+                        <small class="form-text text-muted">New Regime: ₹75,000 | Old Regime: ₹50,000</small>
+                    </div>
+                    
+                    <!-- Section 80C -->
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-piggy-bank me-2"></i>Section 80C (EPF, PPF, ELSS, etc.)
+                            <span class="badge bg-info">Max ₹1.5L</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text">₹</span>
+                            <input type="number" class="form-control" id="section80C" placeholder="150000" value="0" max="150000">
+                        </div>
+                    </div>
+                    
+                    <!-- Section 80D -->
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-heartbeat me-2"></i>Section 80D (Health Insurance)
+                            <span class="badge bg-info">Max ₹25K</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text">₹</span>
+                            <input type="number" class="form-control" id="section80D" placeholder="25000" value="0" max="25000">
+                        </div>
+                    </div>
+                    
+                    <!-- Section 80G -->
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-hand-holding-heart me-2"></i>Section 80G (Donations)
+                            <span class="badge bg-info">No Limit</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text">₹</span>
+                            <input type="number" class="form-control" id="section80G" placeholder="0" value="0">
+                        </div>
+                    </div>
+                    
+                    <!-- Section 24(b) -->
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-home me-2"></i>Section 24(b) (Home Loan Interest)
+                            <span class="badge bg-info">Max ₹2L</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text">₹</span>
+                            <input type="number" class="form-control" id="section24b" placeholder="200000" value="0" max="200000">
+                        </div>
+                    </div>
+                    
+                    <!-- Total Deductions -->
+                    <div class="alert alert-info">
+                        <strong>Total Deductions: <span id="totalDeductions">₹75,000</span></strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Regime Selection -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-warning text-white">
+                    <h4><i class="fas fa-balance-scale me-2"></i>Choose Tax Regime</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="taxRegime" id="newRegime" value="new" checked>
+                                <label class="form-check-label" for="newRegime">
+                                    <strong>New Tax Regime (Recommended)</strong><br>
+                                    <small class="text-muted">Lower tax rates, limited deductions</small>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="taxRegime" id="oldRegime" value="old">
+                                <label class="form-check-label" for="oldRegime">
+                                    <strong>Old Tax Regime</strong><br>
+                                    <small class="text-muted">Higher tax rates, more deductions</small>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calculate Button -->
+    <div class="row mb-4">
+        <div class="col-12 text-center">
+            <button type="submit" class="btn btn-primary btn-lg">
+                <i class="fas fa-calculator me-2"></i>Calculate Tax & Compare Regimes
+            </button>
+        </div>
+    </div>
+</form>
+
+<!-- Results Section -->
+<div id="resultsSection" style="display: none;">
+    <!-- Tax Comparison -->
+    <div class="row mb-4">
+        <div class="col-md-6 mb-3">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5><i class="fas fa-star me-2"></i>New Tax Regime (FY 2024-25)</h5>
+                </div>
+                <div class="card-body" id="newRegimeResults">
+                    <!-- Results will be populated here -->
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5><i class="fas fa-clock me-2"></i>Old Tax Regime</h5>
+                </div>
+                <div class="card-body" id="oldRegimeResults">
+                    <!-- Results will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Savings Highlight -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div id="savingsHighlight" class="savings-highlight">
+                <!-- Savings comparison will appear here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Tax Breakdown Chart -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h5><i class="fas fa-chart-pie me-2"></i>Tax Breakdown</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="taxBreakdownChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Indicator -->
+<div id="loadingIndicator" class="text-center" style="display: none;">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Calculating...</span>
+    </div>
+    <p class="mt-2">Calculating your tax optimization...</p>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let taxChart = null;
+
+// Calculate total income
+function calculateTotalIncome() {
+    const salary = parseFloat(document.getElementById('salaryIncome').value) || 0;
+    const business = parseFloat(document.getElementById('businessIncome').value) || 0;
+    const capital = parseFloat(document.getElementById('capitalGains').value) || 0;
+    const other = parseFloat(document.getElementById('otherIncome').value) || 0;
+    
+    const total = salary + business + capital + other;
+    document.getElementById('totalIncome').textContent = formatCurrency(total);
+    return total;
+}
+
+// Calculate total deductions
+function calculateTotalDeductions() {
+    const standard = parseFloat(document.getElementById('standardDeduction').value) || 0;
+    const section80C = parseFloat(document.getElementById('section80C').value) || 0;
+    const section80D = parseFloat(document.getElementById('section80D').value) || 0;
+    const section80G = parseFloat(document.getElementById('section80G').value) || 0;
+    const section24b = parseFloat(document.getElementById('section24b').value) || 0;
+    
+    const total = standard + section80C + section80D + section80G + section24b;
+    document.getElementById('totalDeductions').textContent = formatCurrency(total);
+    return total;
+}
+
+// Update standard deduction based on regime
+function updateStandardDeduction() {
+    const regime = document.querySelector('input[name="taxRegime"]:checked').value;
+    const standardInput = document.getElementById('standardDeduction');
+    
+    if (regime === 'new') {
+        standardInput.value = 75000;
+    } else {
+        standardInput.value = 50000;
+    }
+    calculateTotalDeductions();
+}
+
+// Calculate tax for new regime
+function calculateNewRegimeTax(income, deductions) {
+    const taxableIncome = Math.max(0, income - deductions);
+    let tax = 0;
+    
+    if (taxableIncome > 300000) {
+        if (taxableIncome <= 600000) {
+            tax = (taxableIncome - 300000) * 0.05;
+        } else if (taxableIncome <= 900000) {
+            tax = 15000 + (taxableIncome - 600000) * 0.10;
+        } else if (taxableIncome <= 1200000) {
+            tax = 45000 + (taxableIncome - 900000) * 0.15;
+        } else if (taxableIncome <= 1500000) {
+            tax = 90000 + (taxableIncome - 1200000) * 0.20;
+        } else {
+            tax = 150000 + (taxableIncome - 1500000) * 0.30;
+        }
+    }
+    
+    const cess = tax * 0.04;
+    return {
+        taxableIncome,
+        baseTax: tax,
+        cess,
+        totalTax: tax + cess,
+        effectiveRate: income > 0 ? ((tax + cess) / income * 100) : 0
+    };
+}
+
+// Calculate tax for old regime
+function calculateOldRegimeTax(income, deductions) {
+    const taxableIncome = Math.max(0, income - deductions);
+    let tax = 0;
+    
+    if (taxableIncome > 250000) {
+        if (taxableIncome <= 500000) {
+            tax = (taxableIncome - 250000) * 0.05;
+        } else if (taxableIncome <= 1000000) {
+            tax = 12500 + (taxableIncome - 500000) * 0.20;
+        } else {
+            tax = 112500 + (taxableIncome - 1000000) * 0.30;
+        }
+    }
+    
+    const cess = tax * 0.04;
+    return {
+        taxableIncome,
+        baseTax: tax,
+        cess,
+        totalTax: tax + cess,
+        effectiveRate: income > 0 ? ((tax + cess) / income * 100) : 0
+    };
+}
+
+// Display tax results
+function displayResults(newRegime, oldRegime) {
+    // New Regime Results
+    document.getElementById('newRegimeResults').innerHTML = `
+        <div class="mb-2"><strong>Taxable Income:</strong> ${formatCurrency(newRegime.taxableIncome)}</div>
+        <div class="mb-2"><strong>Base Tax:</strong> ${formatCurrency(newRegime.baseTax)}</div>
+        <div class="mb-2"><strong>Health & Education Cess (4%):</strong> ${formatCurrency(newRegime.cess)}</div>
+        <div class="mb-2"><strong>Total Tax:</strong> <span class="text-success">${formatCurrency(newRegime.totalTax)}</span></div>
+        <div><strong>Effective Tax Rate:</strong> ${newRegime.effectiveRate.toFixed(2)}%</div>
+    `;
+    
+    // Old Regime Results
+    document.getElementById('oldRegimeResults').innerHTML = `
+        <div class="mb-2"><strong>Taxable Income:</strong> ${formatCurrency(oldRegime.taxableIncome)}</div>
+        <div class="mb-2"><strong>Base Tax:</strong> ${formatCurrency(oldRegime.baseTax)}</div>
+        <div class="mb-2"><strong>Health & Education Cess (4%):</strong> ${formatCurrency(oldRegime.cess)}</div>
+        <div class="mb-2"><strong>Total Tax:</strong> <span class="text-info">${formatCurrency(oldRegime.totalTax)}</span></div>
+        <div><strong>Effective Tax Rate:</strong> ${oldRegime.effectiveRate.toFixed(2)}%</div>
+    `;
+    
+    // Savings Highlight
+    const savings = oldRegime.totalTax - newRegime.totalTax;
+    const recommendedRegime = savings > 0 ? 'New' : 'Old';
+    const savingsAmount = Math.abs(savings);
+    
+    document.getElementById('savingsHighlight').innerHTML = `
+        <i class="fas fa-trophy me-2"></i>
+        Recommended: <strong>${recommendedRegime} Tax Regime</strong> - 
+        Save ${formatCurrency(savingsAmount)} annually!
+    `;
+    
+    // Update chart
+    updateTaxChart(newRegime, oldRegime);
+    
+    // Show results section
+    document.getElementById('resultsSection').style.display = 'block';
+    document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+}
+
+// Update tax breakdown chart
+function updateTaxChart(newRegime, oldRegime) {
+    const ctx = document.getElementById('taxBreakdownChart').getContext('2d');
+    
+    if (taxChart) {
+        taxChart.destroy();
+    }
+    
+    taxChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['New Regime', 'Old Regime'],
+            datasets: [{
+                label: 'Total Tax (₹)',
+                data: [newRegime.totalTax, oldRegime.totalTax],
+                backgroundColor: ['#27ae60', '#3498db'],
+                borderColor: ['#229954', '#2980b9'],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '₹' + value.toLocaleString();
+                        }
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Tax: ₹' + context.parsed.y.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Form submission handler
+document.getElementById('taxCalculatorForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Show loading
+    document.getElementById('loadingIndicator').style.display = 'block';
+    document.getElementById('resultsSection').style.display = 'none';
+    
+    // Get form data
+    const totalIncome = calculateTotalIncome();
+    const standardDeduction = parseFloat(document.getElementById('standardDeduction').value) || 0;
+    
+    // Calculate deductions for both regimes
+    const newRegimeDeductions = standardDeduction; // New regime has limited deductions
+    const oldRegimeDeductions = calculateTotalDeductions(); // Old regime has all deductions
+    
+    // Calculate tax for both regimes
+    const newRegime = calculateNewRegimeTax(totalIncome, newRegimeDeductions);
+    const oldRegime = calculateOldRegimeTax(totalIncome, oldRegimeDeductions);
+    
+    // Simulate API delay
+    setTimeout(() => {
+        document.getElementById('loadingIndicator').style.display = 'none';
+        displayResults(newRegime, oldRegime);
+    }, 1500);
+});
+
+// Event listeners for real-time calculations
+document.querySelectorAll('input[type="number"]').forEach(input => {
+    input.addEventListener('input', function() {
+        calculateTotalIncome();
+        calculateTotalDeductions();
+    });
+});
+
+document.querySelectorAll('input[name="taxRegime"]').forEach(input => {
+    input.addEventListener('change', updateStandardDeduction);
+});
+
+// Initialize calculations
+document.addEventListener('DOMContentLoaded', function() {
+    calculateTotalIncome();
+    calculateTotalDeductions();
+});
+</script>
+{% endblock %}

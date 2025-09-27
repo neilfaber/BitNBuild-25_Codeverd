@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'social_django',
     'authentication',
+    'tax_optimization',
     'bank_analyzer',
 ]
 
