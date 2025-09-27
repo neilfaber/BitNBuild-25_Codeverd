@@ -27,6 +27,7 @@ urlpatterns = [
     path('auth/', include('authentication.urls', namespace='authentication')),
     path('tax-ai/', include('tax_optimization.urls')),  # Protected tax AI routes
     path('', include('bank_analyzer.urls')),
+    path('voice-assistant/', include('ai_voice_assistant.urls')),
 ]
 
 if settings.DEBUG:
