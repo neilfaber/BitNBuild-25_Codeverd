@@ -1,0 +1,36 @@
+# Django Framework
+Django==5.2.6
+
+# Environment Variables
+python-dotenv==1.0.0
+
+# Social Authentication
+social-auth-app-django==5.4.0
+social-auth-core==4.5.4
+
+# Django REST Framework
+djangorestframework==3.15.2
+django-cors-headers==4.4.0
+
+# AI and Machine Learning
+transformers>=4.30.0
+torch>=2.0.0
+sentence-transformers>=2.7.0
+huggingface-hub>=0.24.0
+accelerate>=0.33.0
+safetensors>=0.4.0
+scikit-learn>=1.5.0
+
+# Data Processing
+numpy>=1.26.0
+pandas>=2.2.0
+
+# Additional dependencies
+python-decouple==3.8
+
+# For production (optional)
+gunicorn==21.2.0
+whitenoise==6.7.0
+
+# Development tools (optional)
+django-extensions==3.2.3

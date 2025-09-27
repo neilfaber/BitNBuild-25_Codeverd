@@ -23,6 +23,14 @@ load_dotenv()
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY')
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET')
 
+# Hugging Face API Configuration
+HUGGING_FACE_API_KEY = os.environ.get('HUGGING_FACE')
+os.environ['HUGGINGFACE_HUB_CACHE'] = os.path.join(BASE_DIR, '.cache', 'huggingface')
+
+# AI Model Configuration
+AI_MODELS_ENABLED = True  # Enable AI models now that we have the API key
+AI_MODEL_CACHE_TIMEOUT = 3600  # Cache models for 1 hour
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
