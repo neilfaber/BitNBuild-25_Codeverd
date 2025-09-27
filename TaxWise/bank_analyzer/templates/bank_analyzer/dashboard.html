@@ -1,44 +1,315 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Transaction Analysis Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction Analysis Dashboard - TaxWise</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { font-family: Arial, sans-serif; background: #f0f2f5; padding: 20px; }
-        h1 { text-align: center; }
-        .category { background: white; padding: 15px; border-radius: 8px; margin: 20px auto; width: 80%; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { border-bottom: 1px solid #ddd; padding: 10px; text-align: left; }
-        th { background: #4CAF50; color: white; }
-        tr:hover { background: #f1f1f1; }
-        .error { color: red; text-align: center; }
+        .transaction-card {
+            border-left: 4px solid #007bff;
+            margin-bottom: 1rem;
+        }
+        .transaction-card.credit {
+            border-left-color: #28a745;
+        }
+        .transaction-card.debit {
+            border-left-color: #dc3545;
+        }
+        .summary-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+        }
+        .category-badge {
+            font-size: 0.8rem;
+        }
     </style>
 </head>
-<body>
-    <h1>Transaction Analysis Dashboard</h1>
-
-    {% if analysis.error %}
-        <p class="error">{{ analysis.error }}</p>
-        <pre>{{ analysis.raw_output }}</pre>
-    {% else %}
-        {% for category, transactions in analysis.items %}
-            <div class="category">
-                <h2>{{ category }}</h2>
-                <table>
-                    <tr>
-                        <th>Date</th>
-                        <th>Description</th>
-                        <th>Amount</th>
-                    </tr>
-                    {% for txn in transactions %}
-                        <tr>
-                            <td>{{ txn.date }}</td>
-                            <td>{{ txn.description }}</td>
-                            <td>{{ txn.amount }}</td>
-                        </tr>
-                    {% endfor %}
-                </table>
+<body class="bg-light">
+    <div class="container py-4">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="text-center mb-0">
+                    <i class="fas fa-chart-bar text-primary me-2"></i>
+                    Transaction Analysis Dashboard
+                </h1>
+                <p class="text-center text-muted">AI-powered transaction categorization with debit/credit classification</p>
             </div>
-        {% endfor %}
-    {% endif %}
+        </div>
+
+        {% if analysis.error %}
+            <div class="alert alert-danger" role="alert">
+                <h4 class="alert-heading">Analysis Error</h4>
+                <p>{{ analysis.error }}</p>
+                {% if analysis.raw_output %}
+                    <hr>
+                    <pre class="mb-0">{{ analysis.raw_output }}</pre>
+                {% endif %}
+            </div>
+        {% else %}
+            <!-- Summary Section -->
+            {% if analysis.summary %}
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card summary-card">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-chart-pie me-2"></i>
+                                Transaction Summary
+                            </h5>
+                            <div class="row text-center">
+                                <div class="col-md-3">
+                                    <h3>{{ analysis.summary.total_transactions|default:0 }}</h3>
+                                    <small>Total Transactions</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <h3>₹{{ analysis.summary.total_credits|floatformat:2|default:"0.00" }}</h3>
+                                    <small>Total Credits</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <h3>₹{{ analysis.summary.total_debits|floatformat:2|default:"0.00" }}</h3>
+                                    <small>Total Debits</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <h3>₹{{ analysis.summary.net_amount|floatformat:2|default:"0.00" }}</h3>
+                                    <small>Net Amount</small>
+                                </div>
+                            </div>
+                            {% if analysis.summary.period %}
+                                <div class="text-center mt-2">
+                                    <small><i class="fas fa-calendar-alt me-1"></i>{{ analysis.summary.period }}</small>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Individual Transactions from Database -->
+            {% if transactions %}
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-list me-2"></i>
+                                Processed Transactions
+                                <span class="badge bg-primary ms-2">{{ transactions.count }} saved</span>
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% for transaction in transactions %}
+                            <div class="card transaction-card {% if transaction.is_credit %}credit{% else %}debit{% endif %}">
+                                <div class="card-body py-2">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-2">
+                                            <strong>{{ transaction.transaction_date }}</strong>
+                                        </div>
+                                        <div class="col-md-5">
+                                            <div>{{ transaction.description|truncatechars:80 }}</div>
+                                            <small class="text-muted">
+                                                <span class="badge bg-secondary category-badge">{{ transaction.get_category_display }}</span>
+                                                {% if transaction.ai_confidence > 0 %}
+                                                    <span class="badge bg-info category-badge">{{ transaction.ai_confidence|floatformat:1 }}% confident</span>
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                        <div class="col-md-2 text-center">
+                                            <span class="badge {% if transaction.is_credit %}bg-success{% else %}bg-danger{% endif %}">
+                                                <i class="fas {% if transaction.is_credit %}fa-arrow-up{% else %}fa-arrow-down{% endif %} me-1"></i>
+                                                {{ transaction.transaction_type }}
+                                            </span>
+                                        </div>
+                                        <div class="col-md-2 text-end">
+                                            <strong class="{% if transaction.is_credit %}text-success{% else %}text-danger{% endif %}">
+                                                {% if transaction.is_credit %}+{% else %}-{% endif %}₹{{ transaction.amount|floatformat:2 }}
+                                            </strong>
+                                        </div>
+                                        <div class="col-md-1 text-center">
+                                            {% if transaction.is_recurring %}
+                                                <i class="fas fa-sync-alt text-info" title="Recurring"></i>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Raw AI Analysis (Legacy Format) -->
+            {% if analysis.transactions %}
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-robot me-2"></i>
+                                AI Analysis Results
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Description</th>
+                                            <th>Amount</th>
+                                            <th>Type</th>
+                                            <th>Category</th>
+                                            <th>Confidence</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for txn in analysis.transactions %}
+                                        <tr>
+                                            <td>{{ txn.date }}</td>
+                                            <td>{{ txn.description|truncatechars:60 }}</td>
+                                            <td class="{% if txn.type == 'CREDIT' %}text-success{% else %}text-danger{% endif %}">
+                                                {% if txn.type == 'CREDIT' %}+{% else %}-{% endif %}₹{{ txn.amount|floatformat:2 }}
+                                            </td>
+                                            <td>
+                                                <span class="badge {% if txn.type == 'CREDIT' %}bg-success{% else %}bg-danger{% endif %}">
+                                                    {{ txn.type }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-secondary">{{ txn.category }}</span>
+                                            </td>
+                                            <td>
+                                                <div class="progress" style="height: 20px;">
+                                                    <div class="progress-bar" role="progressbar" 
+                                                         style="width: {{ txn.confidence|floatformat:0 }}%" 
+                                                         aria-valuenow="{{ txn.confidence|floatformat:0 }}" 
+                                                         aria-valuemin="0" 
+                                                         aria-valuemax="100">
+                                                        {{ txn.confidence|floatformat:1 }}%
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Legacy Category Format -->
+            {% for category, transaction_list in analysis.items %}
+                {% if category != 'transactions' and category != 'summary' %}
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-tags me-2"></i>
+                                    {{ category }}
+                                    <span class="badge bg-primary ms-2">{{ transaction_list|length }}</span>
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Description</th>
+                                                <th>Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for txn in transaction_list %}
+                                            <tr>
+                                                <td>{{ txn.date }}</td>
+                                                <td>{{ txn.description }}</td>
+                                                <td class="text-end">₹{{ txn.amount|floatformat:2 }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            {% endfor %}
+
+            <!-- User Summaries -->
+            {% if user_summaries %}
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-calendar-alt me-2"></i>
+                                Monthly Summaries
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Month/Year</th>
+                                            <th>Credits</th>
+                                            <th>Debits</th>
+                                            <th>Net Amount</th>
+                                            <th>Transactions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for summary in user_summaries %}
+                                        <tr>
+                                            <td>{{ summary.month }}/{{ summary.year }}</td>
+                                            <td class="text-success">₹{{ summary.total_credits|floatformat:2 }}</td>
+                                            <td class="text-danger">₹{{ summary.total_debits|floatformat:2 }}</td>
+                                            <td class="{% if summary.net_amount >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                                ₹{{ summary.net_amount|floatformat:2 }}
+                                            </td>
+                                            <td>{{ summary.total_transactions }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        {% endif %}
+
+        <!-- Action Buttons -->
+        <div class="row">
+            <div class="col-12 text-center">
+                <a href="{% url 'analyzer:upload' %}" class="btn btn-primary me-2">
+                    <i class="fas fa-upload me-1"></i>
+                    Upload Another Statement
+                </a>
+                <a href="{% url 'analyzer:user_dashboard' %}" class="btn btn-success me-2">
+                    <i class="fas fa-tachometer-alt me-1"></i>
+                    My Dashboard
+                </a>
+                <a href="{% url 'tax_optimization:calculator' %}" class="btn btn-info">
+                    <i class="fas fa-calculator me-1"></i>
+                    Tax Calculator
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -186,7 +186,7 @@
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
-            <a class="navbar-brand" href="{% url 'tax_optimization:home' %}">
+                                <a class="navbar-brand d-flex align-items-center" href="{% url 'analyzer:upload' %}">
                 <i class="fas fa-calculator me-2"></i>TaxWise AI
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -227,12 +227,6 @@
                                 <i class="fas fa-magic me-2"></i>What-If Scenarios
                             </a></li>
                         </ul>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'tax_optimization:data-ingestion-upload' %}">
-                            <i class="fas fa-cloud-upload-alt me-1"></i>Smart Data Ingestion
-                        </a>
-                    </li>
                     </li>
                 </ul>
             </div>
