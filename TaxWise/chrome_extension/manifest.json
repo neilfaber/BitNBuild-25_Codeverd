@@ -1,0 +1,48 @@
+{
+  "manifest_version": 3,
+  "name": "TaxWise Statement Uploader",
+  "version": "1.0",
+  "description": "Automatically upload bank statements and invoices to TaxWise",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "tabs",
+    "downloads",
+    "webRequest"
+  ],
+  "host_permissions": [
+    "http://localhost:8000/*",
+    "https://*.bankofamerica.com/*",
+    "https://*.chase.com/*",
+    "https://*.citibank.com/*",
+    "https://*.wellsfargo.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.svg",
+      "48": "icons/icon48.svg",
+      "128": "icons/icon128.svg"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.bankofamerica.com/*",
+        "https://*.chase.com/*",
+        "https://*.citibank.com/*",
+        "https://*.wellsfargo.com/*"
+      ],
+      "js": ["content.js"],
+      "css": ["content.css"]
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.svg",
+    "48": "icons/icon48.svg",
+    "128": "icons/icon128.svg"
+  }
+}
