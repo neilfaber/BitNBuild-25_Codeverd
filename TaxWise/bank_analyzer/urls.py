@@ -5,6 +5,6 @@ from . import views
 app_name = 'analyzer'
 
 urlpatterns = [
-    path('', views.upload_view, name='upload'),
+    path('upload/', views.upload_view, name='upload'),
     path('detail/<int:pk>/', views.detail_view, name='detail'),
 ]
