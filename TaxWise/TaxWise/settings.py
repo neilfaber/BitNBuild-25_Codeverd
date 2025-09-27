@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'authentication',
     'tax_optimization',
     'bank_analyzer',
+    'blockchain',
 ]
 
 MIDDLEWARE = [
