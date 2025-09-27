@@ -373,11 +373,11 @@
                 <ul class="nav-links">
                     {% if user.is_authenticated %}
                         <li><a href="{% url 'tax_optimization:home' %}"><i class="fas fa-brain"></i> Tax AI</a></li>
-                        <li><a href="{% url 'profile' %}"><i class="fas fa-user"></i> Profile</a></li>
-                        <li><a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                        <li><a href="{% url 'authentication:profile' %}"><i class="fas fa-user"></i> Profile</a></li>
+                        <li><a href="{% url 'authentication:logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
                     {% else %}
                         <li><a href="{% url 'landing' %}"><i class="fas fa-home"></i> Home</a></li>
-                        <li><a href="{% url 'login' %}"><i class="fas fa-sign-in-alt"></i> Login</a></li>
+                        <li><a href="{% url 'authentication:login' %}"><i class="fas fa-sign-in-alt"></i> Login</a></li>
                     {% endif %}
                 </ul>
             </nav>
