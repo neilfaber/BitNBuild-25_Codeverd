@@ -140,7 +140,7 @@
 </div>
 
 <!-- Recent Activity / Quick Stats -->
-<div class="row">
+<div class="row mb-4">
     <div class="col-md-3 mb-3">
         <div class="card text-center">
             <div class="card-body">
@@ -174,6 +174,70 @@
                 <i class="fas fa-lightbulb fa-2x text-info mb-3"></i>
                 <h4>10k+</h4>
                 <p class="text-muted">Recommendations</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New CIBIL Score Advisor Section -->
+<div class="row">
+    <div class="col-12">
+        <div class="card" style="border-left: 4px solid #17a2b8;">
+            <div class="card-header bg-info text-white">
+                <h4><i class="fas fa-credit-card me-2"></i>NEW: CIBIL Score Advisor</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h5 class="text-primary mb-3">AI-Powered Credit Score Analysis & Improvement</h5>
+                        <p class="mb-3">
+                            Our new CIBIL Score Advisor analyzes your credit behavior from financial statements and provides 
+                            personalized recommendations to improve your creditworthiness. Get actionable insights with 
+                            "what-if" scenario simulations.
+                        </p>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-check text-success me-2"></i>Real-time credit score monitoring</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Factor-wise score breakdown</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Personalized improvement tips</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-check text-success me-2"></i>What-if scenario analysis</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Credit behavior from bank statements</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Actionable improvement roadmap</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex gap-3">
+                            <a href="{% url 'tax_optimization:cibil-dashboard' %}" class="btn btn-info">
+                                <i class="fas fa-tachometer-alt me-2"></i>View CIBIL Dashboard
+                            </a>
+                            <a href="{% url 'tax_optimization:cibil-recommendations' %}" class="btn btn-outline-info">
+                                <i class="fas fa-lightbulb me-2"></i>Get Recommendations
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <div class="p-4">
+                            <div class="mb-3">
+                                <i class="fas fa-chart-pie fa-4x text-info mb-3"></i>
+                            </div>
+                            <div class="bg-light rounded p-3">
+                                <h2 class="text-primary mb-0">720</h2>
+                                <small class="text-muted">Sample CIBIL Score</small>
+                                <div class="mt-2">
+                                    <span class="badge bg-success">+20 points</span>
+                                    <small class="text-muted d-block">Potential Improvement</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

@@ -1,0 +1,673 @@
+{% extends 'tax_optimization/base.html' %}
+
+{% block title %}CIBIL Score Analysis - TaxWise{% endblock %}
+
+{% block content %}
+<!-- Analysis Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="section-header text-center">
+                <h1><i class="fas fa-chart-bar me-3"></i>Detailed CIBIL Score Analysis</h1>
+                <p class="lead mb-0">Deep dive into your credit profile with comprehensive factor analysis</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Score Overview -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-center h-100">
+            <div class="card-header bg-primary text-white">
+                <h5><i class="fas fa-user me-2"></i>Your Score</h5>
+            </div>
+            <div class="card-body">
+                <div id="scoreOverview">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header bg-info text-white">
+                <h5><i class="fas fa-chart-line me-2"></i>Score Trend</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="scoreTrendChart" width="300" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header bg-success text-white">
+                <h5><i class="fas fa-users me-2"></i>Peer Comparison</h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <div class="progress mb-2">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: 68%" aria-valuenow="68" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <small class="text-muted">Better than 68% of users in your age group</small>
+                </div>
+                <h4 class="text-success">Above Average</h4>
+                <p class="small text-muted">Your score is in the top 32% of your demographic</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Factor Analysis -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card h-100">
+            <div class="card-header bg-warning text-white">
+                <h5><i class="fas fa-puzzle-piece me-2"></i>Score Factor Breakdown</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="factorChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header bg-danger text-white">
+                <h5><i class="fas fa-exclamation-triangle me-2"></i>Areas to Improve</h5>
+            </div>
+            <div class="card-body">
+                <div id="improvementAreas">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Factor Analysis -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5><i class="fas fa-microscope me-2"></i>Detailed Factor Analysis</h5>
+            </div>
+            <div class="card-body">
+                <div id="detailedFactors">
+                    <div class="text-center p-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading detailed analysis...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Credit Health Timeline -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5><i class="fas fa-calendar-alt me-2"></i>Credit Health Timeline</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="timelineChart" width="800" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Score Distribution -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header bg-info text-white">
+                <h5><i class="fas fa-chart-pie me-2"></i>Score Distribution</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="distributionChart" width="300" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header bg-success text-white">
+                <h5><i class="fas fa-target me-2"></i>Improvement Potential</h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <h2 class="text-primary">+70 points</h2>
+                    <p class="text-muted">Maximum potential improvement</p>
+                </div>
+                
+                <div class="improvement-breakdown">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Payment History</span>
+                        <span class="text-success fw-bold">+30 pts</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Credit Utilization</span>
+                        <span class="text-success fw-bold">+25 pts</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Credit History</span>
+                        <span class="text-success fw-bold">+10 pts</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Credit Mix</span>
+                        <span class="text-success fw-bold">+5 pts</span>
+                    </div>
+                </div>
+                
+                <a href="{% url 'tax_optimization:cibil-recommendations' %}" class="btn btn-success w-100 mt-3">
+                    <i class="fas fa-arrow-right me-2"></i>View Improvement Plan
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Credit Profile Details -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5><i class="fas fa-list-alt me-2"></i>Credit Profile Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <div class="border rounded p-3 text-center">
+                            <i class="fas fa-clock fa-2x text-primary mb-2"></i>
+                            <h5>4.5 years</h5>
+                            <small class="text-muted">Credit History Length</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="border rounded p-3 text-center">
+                            <i class="fas fa-credit-card fa-2x text-success mb-2"></i>
+                            <h5>3 Accounts</h5>
+                            <small class="text-muted">Active Credit Accounts</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="border rounded p-3 text-center">
+                            <i class="fas fa-percentage fa-2x text-warning mb-2"></i>
+                            <h5>42%</h5>
+                            <small class="text-muted">Credit Utilization</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="border rounded p-3 text-center">
+                            <i class="fas fa-search fa-2x text-info mb-2"></i>
+                            <h5>2 Inquiries</h5>
+                            <small class="text-muted">Last 6 Months</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h6 class="text-primary mb-3">Account Breakdown</h6>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Account Type</th>
+                                        <th>Bank</th>
+                                        <th>Status</th>
+                                        <th>Limit/Amount</th>
+                                        <th>Utilization</th>
+                                        <th>Payment Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><i class="fas fa-credit-card text-primary me-2"></i>Credit Card</td>
+                                        <td>HDFC Bank</td>
+                                        <td><span class="badge bg-success">Active</span></td>
+                                        <td>₹1,50,000</td>
+                                        <td>45%</td>
+                                        <td><span class="badge bg-success">Current</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><i class="fas fa-home text-info me-2"></i>Home Loan</td>
+                                        <td>SBI</td>
+                                        <td><span class="badge bg-success">Active</span></td>
+                                        <td>₹25,00,000</td>
+                                        <td>-</td>
+                                        <td><span class="badge bg-success">Current</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><i class="fas fa-user text-warning me-2"></i>Personal Loan</td>
+                                        <td>Axis Bank</td>
+                                        <td><span class="badge bg-success">Active</span></td>
+                                        <td>₹2,50,000</td>
+                                        <td>-</td>
+                                        <td><span class="badge bg-warning">1 day late</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let factorChart = null;
+let scoreTrendChart = null;
+let timelineChart = null;
+let distributionChart = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadScoreData();
+});
+
+function loadScoreData() {
+    fetch('/cibil/api/score/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                displayScoreOverview(data.data);
+                displayImprovementAreas(data.data.improvement_areas);
+                displayDetailedFactors(data.data.factor_breakdown);
+                createFactorChart(data.data.factor_breakdown);
+                createScoreTrendChart();
+                createTimelineChart();
+                createDistributionChart(data.data.current_score);
+            } else {
+                showError('Failed to load score data');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading score data:', error);
+            showError('Failed to load score data');
+        });
+}
+
+function displayScoreOverview(scoreData) {
+    const container = document.getElementById('scoreOverview');
+    
+    const changeIcon = scoreData.score_change > 0 ? 'arrow-up text-success' : 
+                      scoreData.score_change < 0 ? 'arrow-down text-danger' : 
+                      'minus text-muted';
+    
+    const rangeColor = scoreData.score_range === 'EXCELLENT' ? 'success' :
+                      scoreData.score_range === 'VERY_GOOD' ? 'primary' :
+                      scoreData.score_range === 'GOOD' ? 'info' :
+                      scoreData.score_range === 'FAIR' ? 'warning' : 'danger';
+    
+    container.innerHTML = `
+        <h1 class="display-2 text-primary mb-2">${scoreData.current_score}</h1>
+        <h5 class="text-${rangeColor} mb-3">${scoreData.score_range}</h5>
+        <div class="d-flex justify-content-center align-items-center mb-3">
+            <i class="fas fa-${changeIcon} me-2"></i>
+            <span class="fw-bold">${Math.abs(scoreData.score_change)} points</span>
+        </div>
+        <small class="text-muted">from last update</small>
+    `;
+}
+
+function displayImprovementAreas(areas) {
+    const container = document.getElementById('improvementAreas');
+    
+    if (areas.length === 0) {
+        container.innerHTML = `
+            <div class="text-center text-success">
+                <i class="fas fa-check-circle fa-3x mb-3"></i>
+                <h6>All areas are performing well!</h6>
+                <p class="small text-muted">Your credit profile is in good shape</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '';
+    areas.forEach(area => {
+        const areaName = area.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        const priority = getPriorityForArea(area);
+        const color = priority === 'HIGH' ? 'danger' : priority === 'MEDIUM' ? 'warning' : 'info';
+        
+        html += `
+            <div class="border-start border-${color} ps-3 mb-3">
+                <h6 class="text-${color} mb-1">${areaName}</h6>
+                <small class="text-muted">${priority} Priority</small>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+function getPriorityForArea(area) {
+    const priorities = {
+        'payment_history': 'HIGH',
+        'credit_utilization': 'HIGH',
+        'credit_history': 'MEDIUM',
+        'credit_mix': 'LOW',
+        'recent_credit': 'MEDIUM'
+    };
+    return priorities[area] || 'MEDIUM';
+}
+
+function displayDetailedFactors(factors) {
+    const container = document.getElementById('detailedFactors');
+    
+    let html = '';
+    Object.keys(factors).forEach(factorKey => {
+        const factor = factors[factorKey];
+        const factorName = factorKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        const percentage = (factor.weight * 100).toFixed(0);
+        const statusColor = getStatusColor(factor.status);
+        
+        html += `
+            <div class="row mb-4 p-3 border rounded">
+                <div class="col-md-3">
+                    <h6 class="text-primary mb-1">${factorName}</h6>
+                    <span class="badge bg-${statusColor}">${factor.status}</span>
+                    <div class="mt-2">
+                        <small class="text-muted">${percentage}% of total score</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="progress mb-2" style="height: 20px;">
+                        <div class="progress-bar bg-${statusColor}" role="progressbar" 
+                             style="width: ${(factor.score / 900) * 100}%"
+                             aria-valuenow="${factor.score}" aria-valuemin="0" aria-valuemax="900">
+                            ${factor.score}/900
+                        </div>
+                    </div>
+                    <small class="text-muted">Current Score: ${factor.score} | Contribution: ${factor.contribution.toFixed(1)} points</small>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <h4 class="text-${statusColor}">${factor.contribution.toFixed(0)}</h4>
+                        <small class="text-muted">Points contributed</small>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+function getStatusColor(status) {
+    switch(status) {
+        case 'EXCELLENT': return 'success';
+        case 'VERY_GOOD': return 'primary';
+        case 'GOOD': return 'info';
+        case 'FAIR': return 'warning';
+        case 'POOR': return 'danger';
+        default: return 'secondary';
+    }
+}
+
+function createFactorChart(factors) {
+    const ctx = document.getElementById('factorChart').getContext('2d');
+    
+    if (factorChart) {
+        factorChart.destroy();
+    }
+    
+    const labels = Object.keys(factors).map(key => 
+        key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+    );
+    const scores = Object.values(factors).map(factor => factor.score);
+    const contributions = Object.values(factors).map(factor => factor.contribution);
+    
+    factorChart = new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Current Score',
+                data: scores,
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: 'rgba(54, 162, 235, 1)'
+            }, {
+                label: 'Maximum Possible',
+                data: [900, 900, 900, 900, 900],
+                backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                borderColor: 'rgba(255, 99, 132, 1)',
+                pointBackgroundColor: 'rgba(255, 99, 132, 1)',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: 'rgba(255, 99, 132, 1)'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Credit Score Factor Analysis'
+                }
+            },
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    max: 900,
+                    ticks: {
+                        stepSize: 150
+                    }
+                }
+            }
+        }
+    });
+}
+
+function createScoreTrendChart() {
+    const ctx = document.getElementById('scoreTrendChart').getContext('2d');
+    
+    if (scoreTrendChart) {
+        scoreTrendChart.destroy();
+    }
+    
+    // Sample trend data
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+    const scores = [700, 705, 710, 715, 718, 720];
+    
+    scoreTrendChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: months,
+            datasets: [{
+                label: 'CIBIL Score',
+                data: scores,
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    min: 650,
+                    max: 750
+                }
+            }
+        }
+    });
+}
+
+function createTimelineChart() {
+    const ctx = document.getElementById('timelineChart').getContext('2d');
+    
+    if (timelineChart) {
+        timelineChart.destroy();
+    }
+    
+    // Sample timeline data
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const paymentHistory = [95, 96, 100, 100, 98, 100, 100, 100, 95, 100, 100, 100];
+    const utilization = [45, 42, 40, 38, 45, 43, 42, 40, 42, 45, 43, 42];
+    
+    timelineChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: months,
+            datasets: [{
+                label: 'Payment History %',
+                data: paymentHistory,
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                yAxisID: 'y'
+            }, {
+                label: 'Credit Utilization %',
+                data: utilization,
+                borderColor: 'rgb(255, 99, 132)',
+                backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                yAxisID: 'y1'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Credit Health Timeline (Last 12 Months)'
+                }
+            },
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    min: 90,
+                    max: 100,
+                    title: {
+                        display: true,
+                        text: 'Payment History %'
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    min: 30,
+                    max: 50,
+                    title: {
+                        display: true,
+                        text: 'Credit Utilization %'
+                    },
+                    grid: {
+                        drawOnChartArea: false,
+                    },
+                }
+            }
+        }
+    });
+}
+
+function createDistributionChart(currentScore) {
+    const ctx = document.getElementById('distributionChart').getContext('2d');
+    
+    if (distributionChart) {
+        distributionChart.destroy();
+    }
+    
+    distributionChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Excellent (800-900)', 'Very Good (750-799)', 'Good (650-749)', 'Fair (550-649)', 'Poor (300-549)'],
+            datasets: [{
+                data: [15, 20, 35, 25, 5],
+                backgroundColor: [
+                    '#28a745',
+                    '#007bff',
+                    '#17a2b8',
+                    '#ffc107',
+                    '#dc3545'
+                ],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Indian Population CIBIL Score Distribution'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.label + ': ' + context.parsed + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function showError(message) {
+    const alertHtml = `
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('afterbegin', alertHtml);
+}
+</script>
+
+<style>
+.border-start {
+    border-left-width: 3px !important;
+}
+
+.improvement-breakdown {
+    font-size: 0.9rem;
+}
+
+.table th {
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.table td {
+    font-size: 0.875rem;
+}
+
+canvas {
+    max-height: 300px;
+}
+
+.card {
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+</style>
+{% endblock %}

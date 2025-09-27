@@ -27,7 +27,12 @@ from rest_framework.views import APIView
 
 from .models import (
     UserProfile, FinancialTransaction, Investment, TaxCalculation,
-    TaxOptimizationRecommendation, FileUpload
+    TaxOptimizationRecommendation, FileUpload, CreditProfile, CreditAccount,
+    PaymentHistory, CreditScoreHistory, CreditScoreFactors,
+    CreditImprovementRecommendation, CreditScoreWhatIfScenario,
+    FinancialDataIngestion, IngestionFileUpload, ExtractedTransaction,
+    TransactionPattern, PatternTransaction, IngestionUserPreferences,
+    IngestionAuditLog
 )
 
 logger = logging.getLogger(__name__)
@@ -45,6 +50,7 @@ except ImportError as e:
 
 from .tax_calculator.engine import tax_calculator
 from .utils.file_processor import process_bank_statement
+from .utils.cibil_utils import CIBILScoreCalculator, CIBILRecommendationEngine, CIBILWhatIfAnalyzer, analyze_credit_from_financial_data
 
 # Template Views for Frontend Pages
 def home(request):
@@ -379,3 +385,936 @@ def get_recommendations_simple(request):
         'status': 'error',
         'message': 'Method not allowed'
     }, status=405)
+
+
+# ========================================
+# CIBIL Score and Credit Analysis Views
+# ========================================
+
+def cibil_dashboard(request):
+    """CIBIL Score dashboard page"""
+    return render(request, 'tax_optimization/cibil_dashboard.html')
+
+def cibil_analysis(request):
+    """Detailed CIBIL analysis page"""
+    return render(request, 'tax_optimization/cibil_analysis.html')
+
+def cibil_recommendations(request):
+    """CIBIL improvement recommendations page"""
+    return render(request, 'tax_optimization/cibil_recommendations.html')
+
+def cibil_whatif(request):
+    """What-if scenarios page"""
+    return render(request, 'tax_optimization/cibil_whatif.html')
+
+@csrf_exempt
+def get_cibil_score(request):
+    """Get or calculate user's CIBIL score"""
+    if request.method == 'GET':
+        try:
+            # For demo purposes, return mock data if no real profile exists
+            user_id = request.GET.get('user_id', 1)
+            
+            # Try to get existing credit profile
+            try:
+                from django.contrib.auth.models import User
+                user = User.objects.get(id=user_id)
+                credit_profile = CreditProfile.objects.get(user=user)
+                
+                calculator = CIBILScoreCalculator(credit_profile)
+                score_analysis = calculator.calculate_comprehensive_score()
+                
+                return JsonResponse({
+                    'status': 'success',
+                    'data': {
+                        'current_score': score_analysis['overall_score'],
+                        'score_range': score_analysis['score_range'],
+                        'previous_score': credit_profile.previous_score,
+                        'score_change': credit_profile.score_change,
+                        'last_updated': credit_profile.last_updated.isoformat() if credit_profile.last_updated else None,
+                        'factor_breakdown': score_analysis['factor_scores'],
+                        'improvement_areas': score_analysis['improvement_areas']
+                    }
+                })
+                
+            except (User.DoesNotExist, CreditProfile.DoesNotExist):
+                # Return demo data for new users
+                return JsonResponse({
+                    'status': 'success',
+                    'data': {
+                        'current_score': 720,
+                        'score_range': 'GOOD',
+                        'previous_score': 700,
+                        'score_change': 20,
+                        'last_updated': '2024-01-15',
+                        'factor_breakdown': {
+                            'payment_history': {
+                                'score': 750,
+                                'weight': 0.35,
+                                'contribution': 262.5,
+                                'status': 'GOOD'
+                            },
+                            'credit_utilization': {
+                                'score': 700,
+                                'weight': 0.30,
+                                'contribution': 210.0,
+                                'status': 'GOOD'
+                            },
+                            'credit_history': {
+                                'score': 680,
+                                'weight': 0.15,
+                                'contribution': 102.0,
+                                'status': 'FAIR'
+                            },
+                            'credit_mix': {
+                                'score': 730,
+                                'weight': 0.10,
+                                'contribution': 73.0,
+                                'status': 'GOOD'
+                            },
+                            'recent_credit': {
+                                'score': 750,
+                                'weight': 0.10,
+                                'contribution': 75.0,
+                                'status': 'GOOD'
+                            }
+                        },
+                        'improvement_areas': ['credit_history', 'credit_utilization']
+                    }
+                })
+                
+        except Exception as e:
+            logger.error(f"Error getting CIBIL score: {e}")
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Failed to retrieve CIBIL score'
+            }, status=500)
+    
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Method not allowed'
+    }, status=405)
+
+@csrf_exempt
+def get_cibil_recommendations(request):
+    """Get personalized CIBIL improvement recommendations"""
+    if request.method in ['GET', 'POST']:
+        try:
+            # For demo purposes, return sample recommendations
+            recommendations = [
+                {
+                    'category': 'PAYMENT_BEHAVIOR',
+                    'title': 'Set Up Automatic Payments',
+                    'description': 'Set up autopay for all credit cards and loans to ensure you never miss a payment. This is the most impactful way to improve your CIBIL score.',
+                    'expected_score_improvement': 50,
+                    'timeframe_months': 3,
+                    'priority': 'CRITICAL',
+                    'is_easy_to_implement': True,
+                    'cost_involved': 0,
+                    'ai_confidence': 0.95,
+                    'action_steps': [
+                        'Contact your bank to set up autopay',
+                        'Choose minimum payment or full payment option',
+                        'Set autopay date 3-5 days before due date',
+                        'Monitor account regularly for sufficient balance'
+                    ]
+                },
+                {
+                    'category': 'CREDIT_UTILIZATION',
+                    'title': 'Reduce Credit Card Utilization Below 30%',
+                    'description': 'Your current utilization is 45%. Reduce it to below 30% for significant score improvement, ideally below 10% for excellent scores.',
+                    'expected_score_improvement': 40,
+                    'timeframe_months': 2,
+                    'priority': 'HIGH',
+                    'is_easy_to_implement': True,
+                    'cost_involved': 25000,
+                    'ai_confidence': 0.85,
+                    'action_steps': [
+                        'Calculate 30% of total credit limit (₹45,000)',
+                        'Pay down highest utilization cards first',
+                        'Consider multiple payments per month',
+                        'Track utilization using apps or bank websites'
+                    ]
+                },
+                {
+                    'category': 'CREDIT_UTILIZATION',
+                    'title': 'Request Credit Limit Increases',
+                    'description': 'Increasing your credit limits without increasing balances will automatically improve your utilization ratio.',
+                    'expected_score_improvement': 25,
+                    'timeframe_months': 1,
+                    'priority': 'MEDIUM',
+                    'is_easy_to_implement': True,
+                    'cost_involved': 0,
+                    'ai_confidence': 0.75,
+                    'action_steps': [
+                        'Contact all credit card companies',
+                        'Request limit increases on cards with good payment history',
+                        'Avoid using the additional credit',
+                        'Wait 6 months between requests'
+                    ]
+                },
+                {
+                    'category': 'ACCOUNT_MANAGEMENT',
+                    'title': 'Keep Old Credit Cards Active',
+                    'description': 'Keep your oldest credit cards open and use them occasionally to maintain credit history length.',
+                    'expected_score_improvement': 15,
+                    'timeframe_months': 6,
+                    'priority': 'MEDIUM',
+                    'is_easy_to_implement': True,
+                    'cost_involved': 0,
+                    'ai_confidence': 0.8,
+                    'action_steps': [
+                        'Identify your oldest credit cards',
+                        'Make small purchases monthly (₹200-500)',
+                        'Pay off balances immediately',
+                        'Avoid closing old accounts unless they have high fees'
+                    ]
+                },
+                {
+                    'category': 'CREDIT_INQUIRIES',
+                    'title': 'Limit New Credit Applications',
+                    'description': 'You have 3 hard inquiries in the last 6 months. Avoid new credit applications for the next 6 months.',
+                    'expected_score_improvement': 20,
+                    'timeframe_months': 6,
+                    'priority': 'MEDIUM',
+                    'is_easy_to_implement': True,
+                    'cost_involved': 0,
+                    'ai_confidence': 0.8,
+                    'action_steps': [
+                        'Avoid applying for new credit cards or loans',
+                        'Wait at least 6 months between applications',
+                        'Use soft inquiry tools to check eligibility first',
+                        'Focus on improving existing accounts'
+                    ]
+                }
+            ]
+            
+            return JsonResponse({
+                'status': 'success',
+                'data': {
+                    'recommendations': recommendations,
+                    'total_expected_improvement': sum(r['expected_score_improvement'] for r in recommendations[:3]),
+                    'critical_count': len([r for r in recommendations if r['priority'] == 'CRITICAL']),
+                    'high_priority_count': len([r for r in recommendations if r['priority'] == 'HIGH']),
+                    'quick_wins': [r for r in recommendations if r['timeframe_months'] <= 3 and r['is_easy_to_implement']]
+                }
+            })
+            
+        except Exception as e:
+            logger.error(f"Error getting CIBIL recommendations: {e}")
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Failed to generate recommendations'
+            }, status=500)
+    
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Method not allowed'
+    }, status=405)
+
+@csrf_exempt
+def cibil_whatif_analysis(request):
+    """What-if scenario analysis for CIBIL score prediction"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            scenario_type = data.get('scenario_type', 'custom')
+            
+            # Define common scenarios
+            scenarios = {
+                'perfect_payments': {
+                    'name': 'Perfect Payment History',
+                    'description': 'Maintain 100% on-time payments for all accounts',
+                    'current_score': 720,
+                    'predicted_score': 770,
+                    'score_improvement': 50,
+                    'timeframe_months': 6,
+                    'confidence_level': 0.9,
+                    'difficulty': 'LOW',
+                    'changes': [
+                        'Set up autopay for all accounts',
+                        'Never miss a payment',
+                        'Pay at least minimum amount on time'
+                    ]
+                },
+                'reduce_utilization': {
+                    'name': 'Reduce Credit Utilization to 10%',
+                    'description': 'Lower credit card utilization from 45% to 10%',
+                    'current_score': 720,
+                    'predicted_score': 760,
+                    'score_improvement': 40,
+                    'timeframe_months': 2,
+                    'confidence_level': 0.85,
+                    'difficulty': 'MEDIUM',
+                    'changes': [
+                        'Pay down ₹52,500 in credit card debt',
+                        'Keep balances below 10% of limits',
+                        'Monitor utilization monthly'
+                    ]
+                },
+                'increase_limits': {
+                    'name': 'Increase Credit Limits by 50%',
+                    'description': 'Request credit limit increases on all cards',
+                    'current_score': 720,
+                    'predicted_score': 745,
+                    'score_improvement': 25,
+                    'timeframe_months': 1,
+                    'confidence_level': 0.75,
+                    'difficulty': 'LOW',
+                    'changes': [
+                        'Call credit card companies',
+                        'Request limit increases',
+                        'Provide income documentation if needed',
+                        'Don\'t use additional credit'
+                    ]
+                },
+                'time_healing': {
+                    'name': 'Natural Improvement Over Time',
+                    'description': 'Let time naturally improve your credit profile',
+                    'current_score': 720,
+                    'predicted_score': 735,
+                    'score_improvement': 15,
+                    'timeframe_months': 12,
+                    'confidence_level': 0.95,
+                    'difficulty': 'LOW',
+                    'changes': [
+                        'Continue current payment behavior',
+                        'Avoid new credit applications',
+                        'Let credit history age naturally',
+                        'Old negative marks will have less impact'
+                    ]
+                },
+                'combined_approach': {
+                    'name': 'Combined Optimization Strategy',
+                    'description': 'Implement multiple improvements simultaneously',
+                    'current_score': 720,
+                    'predicted_score': 790,
+                    'score_improvement': 70,
+                    'timeframe_months': 6,
+                    'confidence_level': 0.8,
+                    'difficulty': 'MEDIUM',
+                    'changes': [
+                        'Perfect payment history',
+                        'Reduce utilization to 10%',
+                        'Increase credit limits',
+                        'Keep old accounts open',
+                        'Limit new inquiries'
+                    ]
+                }
+            }
+            
+            if scenario_type == 'all':
+                return JsonResponse({
+                    'status': 'success',
+                    'data': {
+                        'scenarios': list(scenarios.values()),
+                        'current_score': 720,
+                        'best_scenario': scenarios['combined_approach'],
+                        'quickest_improvement': scenarios['increase_limits'],
+                        'lowest_cost': scenarios['time_healing']
+                    }
+                })
+            elif scenario_type in scenarios:
+                return JsonResponse({
+                    'status': 'success',
+                    'data': scenarios[scenario_type]
+                })
+            else:
+                # Custom scenario
+                custom_params = data.get('parameters', {})
+                
+                # Simple custom calculation
+                base_score = 720
+                improvement = 0
+                
+                if custom_params.get('improve_payments'):
+                    improvement += 50
+                if custom_params.get('target_utilization'):
+                    target = custom_params['target_utilization']
+                    current = 45
+                    if target < current:
+                        improvement += min(40, (current - target) * 1.2)
+                if custom_params.get('increase_limits'):
+                    improvement += 25
+                
+                predicted_score = min(900, base_score + improvement)
+                
+                return JsonResponse({
+                    'status': 'success',
+                    'data': {
+                        'name': 'Custom Scenario',
+                        'description': 'Custom what-if analysis based on your parameters',
+                        'current_score': base_score,
+                        'predicted_score': predicted_score,
+                        'score_improvement': predicted_score - base_score,
+                        'timeframe_months': custom_params.get('timeframe_months', 6),
+                        'confidence_level': 0.75,
+                        'difficulty': 'MEDIUM'
+                    }
+                })
+                
+        except Exception as e:
+            logger.error(f"Error in what-if analysis: {e}")
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Failed to analyze scenario'
+            }, status=500)
+    
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Method not allowed'
+    }, status=405)
+
+@csrf_exempt
+def analyze_financial_data_for_cibil(request):
+    """Analyze financial transaction data to extract credit behavior patterns"""
+    if request.method == 'POST':
+        try:
+            # This would analyze the user's financial transactions to identify credit patterns
+            # For demo purposes, return sample analysis
+            
+            analysis = {
+                'payment_regularity': 85.5,  # Percentage of on-time payments
+                'estimated_utilization': 42.3,  # Estimated credit utilization
+                'emi_payment_count': 24,  # Number of EMI payments found
+                'credit_card_payment_count': 18,  # Number of credit card payments
+                'avg_monthly_emi': 15750,  # Average monthly EMI
+                'credit_discipline_score': 73.2,  # Overall credit discipline score
+                'identified_accounts': [
+                    {
+                        'type': 'Home Loan',
+                        'bank': 'HDFC Bank',
+                        'monthly_emi': 25000,
+                        'regularity': 100
+                    },
+                    {
+                        'type': 'Credit Card',
+                        'bank': 'SBI Card',
+                        'avg_payment': 8500,
+                        'regularity': 80
+                    },
+                    {
+                        'type': 'Personal Loan',
+                        'bank': 'Axis Bank',
+                        'monthly_emi': 12000,
+                        'regularity': 90
+                    }
+                ],
+                'recommendations': [
+                    'Set up autopay for SBI Credit Card to improve payment regularity',
+                    'Your credit utilization appears high - consider paying down balances',
+                    'Excellent EMI payment history shows good credit discipline'
+                ]
+            }
+            
+            return JsonResponse({
+                'status': 'success',
+                'data': analysis
+            })
+            
+        except Exception as e:
+            logger.error(f"Error analyzing financial data: {e}")
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Failed to analyze financial data'
+            }, status=500)
+    
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Method not allowed'
+    }, status=405)
+
+
+# Smart Financial Data Ingestion Views
+
+def data_ingestion_upload(request):
+    """Data ingestion upload page"""
+    return render(request, 'data_ingestion_upload.html', {
+        'title': 'Smart Financial Data Ingestion'
+    })
+
+def data_ingestion_results(request, session_id):
+    """Display results of data ingestion session"""
+    try:
+        user = request.user if request.user.is_authenticated else None
+        if user:
+            ingestion_session = FinancialDataIngestion.objects.get(
+                session_id=session_id, 
+                user=user
+            )
+        else:
+            # For demo, allow any session
+            ingestion_session = FinancialDataIngestion.objects.get(
+                session_id=session_id
+            )
+        
+        # Get session statistics
+        uploaded_files = ingestion_session.uploaded_files.all()
+        extracted_transactions = ingestion_session.extracted_transactions.all()
+        detected_patterns = ingestion_session.detected_patterns.all()
+        
+        # Categorize transactions by status
+        transactions_by_status = {}
+        for transaction in extracted_transactions:
+            status = transaction.extraction_status
+            if status not in transactions_by_status:
+                transactions_by_status[status] = []
+            transactions_by_status[status].append(transaction)
+        
+        # Get pattern statistics
+        pattern_stats = {}
+        for pattern in detected_patterns:
+            pattern_type = pattern.pattern_type
+            if pattern_type not in pattern_stats:
+                pattern_stats[pattern_type] = {
+                    'count': 0,
+                    'total_amount': Decimal('0'),
+                    'confidence': []
+                }
+            pattern_stats[pattern_type]['count'] += 1
+            pattern_stats[pattern_type]['total_amount'] += pattern.average_amount
+            pattern_stats[pattern_type]['confidence'].append(pattern.pattern_confidence)
+        
+        # Calculate average confidence for each pattern type
+        for pattern_type, stats in pattern_stats.items():
+            if stats['confidence']:
+                stats['avg_confidence'] = sum(stats['confidence']) / len(stats['confidence'])
+            else:
+                stats['avg_confidence'] = 0
+        
+        context = {
+            'session': ingestion_session,
+            'uploaded_files': uploaded_files,
+            'extracted_transactions': extracted_transactions[:100],  # Limit for display
+            'detected_patterns': detected_patterns,
+            'transactions_by_status': transactions_by_status,
+            'pattern_stats': pattern_stats,
+            'total_transactions': extracted_transactions.count(),
+            'total_patterns': detected_patterns.count(),
+            'success_rate': ingestion_session.success_rate
+        }
+        
+        return render(request, 'data_ingestion_results.html', context)
+        
+    except FinancialDataIngestion.DoesNotExist:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Ingestion session not found'
+        }, status=404)
+
+@csrf_exempt
+def api_create_ingestion_session(request):
+    """API endpoint to create a new data ingestion session"""
+    if request.method != 'POST':
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Method not allowed'
+        }, status=405)
+    
+    try:
+        data = json.loads(request.body)
+        
+        # Get user or create a demo user
+        user = request.user if request.user.is_authenticated else None
+        if not user:
+            # For demo purposes, create a temporary session without user
+            session = FinancialDataIngestion.objects.create(
+                user_id=1,  # Use admin user or create a demo user
+                session_name=data.get('session_name', 'Demo Session'),
+                session_type=data.get('session_type', 'BULK_UPLOAD'),
+                auto_categorize=data.get('auto_categorize', True),
+                merge_duplicates=data.get('merge_duplicates', True),
+                create_patterns=data.get('create_patterns', True)
+            )
+        else:
+            # Create ingestion session
+            session = FinancialDataIngestion.objects.create(
+                user=user,
+                session_name=data.get('session_name', 'Untitled Session'),
+                session_type=data.get('session_type', 'BULK_UPLOAD'),
+                auto_categorize=data.get('auto_categorize', True),
+                merge_duplicates=data.get('merge_duplicates', True),
+                create_patterns=data.get('create_patterns', True)
+            )
+        
+        # Log audit entry
+        if user:
+            IngestionAuditLog.objects.create(
+                ingestion_session=session,
+                user=user,
+                action_type='PROCESSING_STARTED',
+                action_description=f'Started ingestion session: {session.session_name}',
+                was_successful=True
+            )
+        
+        return JsonResponse({
+            'status': 'success',
+            'session_id': str(session.session_id),
+            'message': 'Ingestion session created successfully'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error creating ingestion session: {e}")
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Failed to create ingestion session'
+        }, status=500)
+
+@csrf_exempt
+def api_upload_file(request):
+    """API endpoint to upload files for processing"""
+    if request.method != 'POST':
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Method not allowed'
+        }, status=405)
+    
+    try:
+        session_id = request.POST.get('session_id')
+        uploaded_file = request.FILES.get('file')
+        
+        if not session_id or not uploaded_file:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Missing session_id or file'
+            }, status=400)
+        
+        # Get ingestion session
+        try:
+            user = request.user if request.user.is_authenticated else None
+            if user:
+                session = FinancialDataIngestion.objects.get(
+                    session_id=session_id,
+                    user=user
+                )
+            else:
+                # For demo, allow any session
+                session = FinancialDataIngestion.objects.get(
+                    session_id=session_id
+                )
+        except FinancialDataIngestion.DoesNotExist:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Ingestion session not found'
+            }, status=404)
+        
+        # Create file upload record
+        file_extension = uploaded_file.name.split('.')[-1].upper()
+        file_upload = IngestionFileUpload.objects.create(
+            ingestion_session=session,
+            original_filename=uploaded_file.name,
+            file_format=file_extension,
+            file_size_bytes=uploaded_file.size,
+            file_path=uploaded_file,
+            processing_status='PROCESSING'
+        )
+        
+        # Process the file
+        try:
+            # Import pattern recognition
+            from .utils.pattern_recognition import recognize_transaction_patterns
+            from .utils.file_processor import process_bank_statement
+            
+            # Process the uploaded file
+            transactions = process_bank_statement(uploaded_file)
+            
+            if not transactions:
+                file_upload.processing_status = 'FAILED'
+                file_upload.processing_error_message = 'No transactions found in file'
+                file_upload.save()
+                
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'No transactions found in file'
+                }, status=400)
+            
+            # Analyze patterns
+            pattern_analysis = recognize_transaction_patterns(transactions)
+            categorized_transactions = pattern_analysis['categorized_transactions']
+            detected_patterns = pattern_analysis['patterns']
+            
+            # Save extracted transactions
+            extracted_count = 0
+            for trans_data in categorized_transactions:
+                extracted_transaction = ExtractedTransaction.objects.create(
+                    file_upload=file_upload,
+                    ingestion_session=session,
+                    raw_transaction_text=trans_data.get('description', ''),
+                    extracted_date=trans_data['date'],
+                    extracted_amount=abs(trans_data['amount']),
+                    extracted_description=trans_data.get('description', ''),
+                    ai_predicted_category=trans_data.get('predicted_category', 'OTHER'),
+                    ai_confidence_score=trans_data.get('confidence', 0.0),
+                    is_recurring_transaction=trans_data.get('is_recurring', False),
+                    extraction_confidence=0.9,  # Default confidence
+                    extraction_status='CLEANED'
+                )
+                extracted_count += 1
+            
+            # Create transaction patterns
+            pattern_count = 0
+            for category, category_patterns in detected_patterns.items():
+                for pattern_data in category_patterns:
+                    pattern = TransactionPattern.objects.create(
+                        ingestion_session=session,
+                        user_id=user.id if user else 1,  # Use admin user for demo
+                        pattern_type=map_category_to_pattern_type(category),
+                        pattern_name=f"{category} - {pattern_data['description_pattern']}",
+                        pattern_description=f"Recurring {category.lower()} pattern",
+                        base_description_pattern=pattern_data['description_pattern'],
+                        amount_range_min=pattern_data['avg_amount'] * Decimal('0.9'),
+                        amount_range_max=pattern_data['avg_amount'] * Decimal('1.1'),
+                        frequency_days=30,  # Default monthly
+                        total_occurrences=len(pattern_data['transactions']),
+                        first_occurrence_date=min(t['date'] for t in pattern_data['transactions']),
+                        last_occurrence_date=max(t['date'] for t in pattern_data['transactions']),
+                        next_predicted_date=pattern_data.get('next_expected_date'),
+                        pattern_confidence=pattern_data['confidence'],
+                        consistency_score=pattern_data['confidence']
+                    )
+                    pattern_count += 1
+            
+            # Update file upload status
+            file_upload.processing_status = 'COMPLETED'
+            file_upload.transactions_extracted = extracted_count
+            if transactions:
+                file_upload.date_range_start = min(t['date'] for t in transactions)
+                file_upload.date_range_end = max(t['date'] for t in transactions)
+            file_upload.save()
+            
+            # Update session statistics
+            session.total_files_uploaded += 1
+            session.files_processed_successfully += 1
+            session.total_transactions_extracted += extracted_count
+            session.transactions_with_patterns += sum(
+                1 for t in categorized_transactions if t.get('is_recurring', False)
+            )
+            session.save()
+            
+            # Log audit entry
+            if user:
+                IngestionAuditLog.objects.create(
+                    ingestion_session=session,
+                    user=user,
+                    action_type='FILE_UPLOADED',
+                    action_description=f'Processed file: {uploaded_file.name}',
+                    affected_object_type='IngestionFileUpload',
+                    affected_object_id=str(file_upload.id),
+                    was_successful=True
+                )
+            
+            return JsonResponse({
+                'status': 'success',
+                'transactions_extracted': extracted_count,
+                'patterns_detected': pattern_count,
+                'file_id': file_upload.id
+            })
+            
+        except Exception as e:
+            logger.error(f"Error processing file: {e}")
+            file_upload.processing_status = 'FAILED'
+            file_upload.processing_error_message = str(e)
+            file_upload.save()
+            
+            session.files_failed += 1
+            session.save()
+            
+            return JsonResponse({
+                'status': 'error',
+                'message': 'File processing failed: ' + str(e)
+            }, status=500)
+            
+    except Exception as e:
+        logger.error(f"Error in file upload: {e}")
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Upload failed: ' + str(e)
+        }, status=500)
+
+def api_session_status(request, session_id):
+    """API endpoint to get ingestion session status"""
+    try:
+        user = request.user if request.user.is_authenticated else None
+        if user:
+            session = FinancialDataIngestion.objects.get(
+                session_id=session_id,
+                user=user
+            )
+        else:
+            # For demo, allow any session
+            session = FinancialDataIngestion.objects.get(
+                session_id=session_id
+            )
+        
+        # Calculate processing progress
+        total_files = session.total_files_uploaded
+        processed_files = session.files_processed_successfully + session.files_failed
+        progress_percentage = (processed_files / total_files * 100) if total_files > 0 else 0
+        
+        # Check if processing is complete
+        if processed_files == total_files and total_files > 0:
+            if session.files_failed == 0:
+                session.ingestion_status = 'COMPLETED'
+            elif session.files_processed_successfully > 0:
+                session.ingestion_status = 'PARTIALLY_COMPLETED'
+            else:
+                session.ingestion_status = 'FAILED'
+            session.completed_at = datetime.now()
+            session.save()
+        
+        return JsonResponse({
+            'session_id': str(session.session_id),
+            'ingestion_status': session.ingestion_status,
+            'total_files_uploaded': session.total_files_uploaded,
+            'files_processed_successfully': session.files_processed_successfully,
+            'files_failed': session.files_failed,
+            'total_transactions_extracted': session.total_transactions_extracted,
+            'transactions_categorized': session.transactions_categorized,
+            'transactions_with_patterns': session.transactions_with_patterns,
+            'progress_percentage': round(progress_percentage, 2),
+            'success_rate': round(session.success_rate, 2),
+            'started_at': session.started_at.isoformat(),
+            'completed_at': session.completed_at.isoformat() if session.completed_at else None
+        })
+        
+    except FinancialDataIngestion.DoesNotExist:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Session not found'
+        }, status=404)
+    except Exception as e:
+        logger.error(f"Error getting session status: {e}")
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Failed to get session status'
+        }, status=500)
+
+@csrf_exempt
+def api_confirm_transactions(request):
+    """API endpoint to confirm processed transactions"""
+    if request.method != 'POST':
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Method not allowed'
+        }, status=405)
+    
+    try:
+        data = json.loads(request.body)
+        transaction_ids = data.get('transaction_ids', [])
+        
+        if not transaction_ids:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'No transaction IDs provided'
+            }, status=400)
+        
+        # Get extracted transactions
+        user = request.user if request.user.is_authenticated else None
+        if user:
+            extracted_transactions = ExtractedTransaction.objects.filter(
+                id__in=transaction_ids,
+                ingestion_session__user=user
+            )
+        else:
+            # For demo, allow any transactions
+            extracted_transactions = ExtractedTransaction.objects.filter(
+                id__in=transaction_ids
+            )
+        
+        confirmed_count = 0
+        for extracted_trans in extracted_transactions:
+            # Create final financial transaction
+            final_transaction = FinancialTransaction.objects.create(
+                user_id=user.id if user else 1,  # Use admin user for demo
+                date=extracted_trans.extracted_date,
+                amount=extracted_trans.extracted_amount,
+                description=extracted_trans.extracted_description,
+                transaction_type='EXPENSE' if extracted_trans.extracted_amount > 0 else 'INCOME',
+                ai_category=extracted_trans.ai_predicted_category,
+                ai_confidence_score=extracted_trans.ai_confidence_score,
+                processed_by_ai=True
+            )
+            
+            # Update extracted transaction
+            extracted_trans.extraction_status = 'VALIDATED'
+            extracted_trans.final_transaction = final_transaction
+            extracted_trans.save()
+            
+            confirmed_count += 1
+        
+        return JsonResponse({
+            'status': 'success',
+            'confirmed_count': confirmed_count,
+            'message': f'Confirmed {confirmed_count} transactions'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error confirming transactions: {e}")
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Failed to confirm transactions'
+        }, status=500)
+
+@csrf_exempt
+def api_confirm_patterns(request):
+    """API endpoint to confirm detected transaction patterns"""
+    if request.method != 'POST':
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Method not allowed'
+        }, status=405)
+    
+    try:
+        data = json.loads(request.body)
+        pattern_ids = data.get('pattern_ids', [])
+        
+        if not pattern_ids:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'No pattern IDs provided'
+            }, status=400)
+        
+        # Get and confirm patterns
+        user = request.user if request.user.is_authenticated else None
+        if user:
+            patterns = TransactionPattern.objects.filter(
+                pattern_id__in=pattern_ids,
+                user=user
+            )
+        else:
+            # For demo, allow any patterns
+            patterns = TransactionPattern.objects.filter(
+                pattern_id__in=pattern_ids
+            )
+        
+        confirmed_count = 0
+        for pattern in patterns:
+            pattern.pattern_status = 'CONFIRMED'
+            pattern.save()
+            confirmed_count += 1
+        
+        return JsonResponse({
+            'status': 'success',
+            'confirmed_count': confirmed_count,
+            'message': f'Confirmed {confirmed_count} patterns'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error confirming patterns: {e}")
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Failed to confirm patterns'
+        }, status=500)
+
+def map_category_to_pattern_type(category):
+    """Map AI category to pattern type"""
+    category_mapping = {
+        'EMI': 'MONTHLY_EMI',
+        'SIP': 'MONTHLY_SIP', 
+        'RENT': 'MONTHLY_RENT',
+        'INSURANCE': 'MONTHLY_INSURANCE',
+        'SUBSCRIPTION': 'MONTHLY_SUBSCRIPTION',
+        'UTILITIES': 'MONTHLY_PAYMENT',
+        'SALARY': 'MONTHLY_PAYMENT'
+    }
+    return category_mapping.get(category, 'CUSTOM_RECURRING')
