@@ -7,11 +7,14 @@ class TaxOptimizationConfig(AppConfig):
     
     def ready(self):
         """Initialize AI models and load configurations when Django starts"""
-        print("Tax optimization app is ready!")
-        # Disable AI model loading for now to allow server to start
-        # try:
-        #     # Import AI model initialization
-        #     from .ai_engine.model_loader import initialize_models
-        #     initialize_models()
-        # except ImportError:
-        #     pass  # AI models not yet implemented
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            from .ai_engine.model_loader import initialize_models
+            logger.info("Initializing AI models on startup...")
+            initialize_models()
+            logger.info("Tax optimization app is ready with AI models!")
+        except Exception as e:
+            logger.warning(f"Failed to initialize AI models on startup: {e}")
+            logger.info("Tax optimization app is ready (rule-based mode)!")
