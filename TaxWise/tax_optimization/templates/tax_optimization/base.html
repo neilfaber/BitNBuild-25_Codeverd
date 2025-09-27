@@ -206,8 +206,33 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'tax_optimization:recommendations' %}">
-                            <i class="fas fa-lightbulb me-1"></i>Recommendations
+                            <i class="fas fa-lightbulb me-1"></i>Tax Recommendations
                         </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="cibilDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-credit-card me-1"></i>CIBIL Advisor
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="cibilDropdown">
+                            <li><a class="dropdown-item" href="{% url 'tax_optimization:cibil-dashboard' %}">
+                                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'tax_optimization:cibil-analysis' %}">
+                                <i class="fas fa-chart-bar me-2"></i>Score Analysis
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'tax_optimization:cibil-recommendations' %}">
+                                <i class="fas fa-lightbulb me-2"></i>Improve Score
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'tax_optimization:cibil-whatif' %}">
+                                <i class="fas fa-magic me-2"></i>What-If Scenarios
+                            </a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'tax_optimization:data-ingestion-upload' %}">
+                            <i class="fas fa-cloud-upload-alt me-1"></i>Smart Data Ingestion
+                        </a>
+                    </li>
                     </li>
                 </ul>
             </div>

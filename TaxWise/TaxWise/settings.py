@@ -23,6 +23,14 @@ load_dotenv()
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY')
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET')
 
+# Hugging Face API Configuration
+HUGGING_FACE_API_KEY = os.environ.get('HUGGING_FACE')
+os.environ['HUGGINGFACE_HUB_CACHE'] = os.path.join(BASE_DIR, '.cache', 'huggingface')
+
+# AI Model Configuration
+AI_MODELS_ENABLED = True  # Enable AI models now that we have the API key
+AI_MODEL_CACHE_TIMEOUT = 3600  # Cache models for 1 hour
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
@@ -32,8 +40,7 @@ SECRET_KEY = 'django-insecure-1^vci-585jo%5&d2^76ztpfc3e3f-rr**@^go$xqfw9$tr@r+2
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
-
+ALLOWED_HOSTS = []
 
 # Application definition
 
@@ -48,7 +55,6 @@ INSTALLED_APPS = [
     'authentication',
     'tax_optimization',
     'bank_analyzer',
-    'blockchain',
 ]
 
 MIDDLEWARE = [
@@ -131,8 +137,6 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -147,9 +151,5 @@ AUTHENTICATION_BACKENDS = [
 
 # Social Auth URLs
 LOGIN_URL = '/auth/login/'
-LOGIN_REDIRECT_URL = '/tax-ai/'  # Redirect to tax AI after login
-LOGOUT_REDIRECT_URL = '/'  # Redirect to landing page after logout
-# Time zone, etc
-LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
-USE_TZ = True
+LOGIN_REDIRECT_URL = '/auth/profile/'
+LOGOUT_REDIRECT_URL = '/auth/'
