@@ -1,0 +1,74 @@
+{% extends 'authentication/base.html' %}
+
+{% block title %}Profile - TaxWise Google OAuth Demo{% endblock %}
+
+{% block header %}User Profile{% endblock %}
+
+{% block content %}
+    <div class="status success">
+        <h3>✅ Successfully Authenticated!</h3>
+        <p>Your Google OAuth2 authentication is working correctly.</p>
+    </div>
+
+    <div class="user-info">
+        <h4>👤 User Information</h4>
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr style="border-bottom: 1px solid #ddd;">
+                <td style="padding: 8px; font-weight: bold;">User ID:</td>
+                <td style="padding: 8px;">{{ user.id }}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #ddd;">
+                <td style="padding: 8px; font-weight: bold;">Username:</td>
+                <td style="padding: 8px;">{{ user.username }}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #ddd;">
+                <td style="padding: 8px; font-weight: bold;">First Name:</td>
+                <td style="padding: 8px;">{{ user.first_name|default:"Not provided" }}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #ddd;">
+                <td style="padding: 8px; font-weight: bold;">Last Name:</td>
+                <td style="padding: 8px;">{{ user.last_name|default:"Not provided" }}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #ddd;">
+                <td style="padding: 8px; font-weight: bold;">Email:</td>
+                <td style="padding: 8px;">{{ user.email|default:"Not provided" }}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #ddd;">
+                <td style="padding: 8px; font-weight: bold;">Date Joined:</td>
+                <td style="padding: 8px;">{{ user.date_joined }}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #ddd;">
+                <td style="padding: 8px; font-weight: bold;">Last Login:</td>
+                <td style="padding: 8px;">{{ user.last_login }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px; font-weight: bold;">Is Superuser:</td>
+                <td style="padding: 8px;">{{ user.is_superuser|yesno:"Yes,No" }}</td>
+            </tr>
+        </table>
+    </div>
+
+    {% if user.social_auth.all %}
+        <div style="background-color: #e8f5e8; padding: 20px; border-radius: 5px; margin: 20px 0;">
+            <h4>🔗 Social Authentication Accounts</h4>
+            {% for social in user.social_auth.all %}
+                <div style="margin: 10px 0; padding: 10px; background-color: white; border-radius: 3px;">
+                    <strong>Provider:</strong> {{ social.provider }}<br>
+                    <strong>UID:</strong> {{ social.uid }}<br>
+                    <strong>Created:</strong> {{ social.created }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div style="text-align: center; margin: 30px 0;">
+        <a href="{% url 'auth_index' %}" class="btn btn-secondary">← Back to Home</a>
+        <a href="{% url 'logout' %}" class="btn btn-google">Logout</a>
+    </div>
+
+    <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px;">
+        <h4>🎉 Congratulations!</h4>
+        <p>Your Google OAuth2 integration is working perfectly. This page is only accessible to authenticated users.</p>
+        <p>You can now extend this authentication system for your TaxWise application.</p>
+    </div>
+{% endblock %}

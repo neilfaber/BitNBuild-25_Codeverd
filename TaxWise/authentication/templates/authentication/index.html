@@ -1,0 +1,45 @@
+{% extends 'authentication/base.html' %}
+
+{% block title %}Home - TaxWise Google OAuth Demo{% endblock %}
+
+{% block content %}
+    <div class="status info">
+        <h3>Welcome to TaxWise Google OAuth Demo</h3>
+        <p>This is a demonstration of Google OAuth2 integration with Django using python-social-auth.</p>
+    </div>
+
+    {% if user.is_authenticated %}
+        <div class="status success">
+            <h4>✅ Authentication Status: Logged In</h4>
+            <p>Welcome back, <strong>{{ user.first_name }} {{ user.last_name }}</strong>!</p>
+            <p>Email: <strong>{{ user.email }}</strong></p>
+            <p>Username: <strong>{{ user.username }}</strong></p>
+        </div>
+        
+        <div style="text-align: center;">
+            <a href="{% url 'profile' %}" class="btn btn-google">View Profile</a>
+            <a href="{% url 'logout' %}" class="btn btn-secondary">Logout</a>
+        </div>
+    {% else %}
+        <div class="status info">
+            <h4>🔐 Authentication Status: Not Logged In</h4>
+            <p>You are currently not authenticated. Click the button below to log in with Google.</p>
+        </div>
+        
+        <div style="text-align: center;">
+            <a href="{% url 'login' %}" class="btn btn-google">Login with Google</a>
+        </div>
+    {% endif %}
+
+    <div style="margin-top: 40px; padding: 20px; background-color: #f8f9fa; border-radius: 5px;">
+        <h4>OAuth Configuration Status:</h4>
+        <ul>
+            <li>✅ Django Social Auth installed</li>
+            <li>✅ Google OAuth2 backend configured</li>
+            <li>✅ Templates created</li>
+            <li>✅ URL patterns set up</li>
+            <li>{% if SOCIAL_AUTH_GOOGLE_OAUTH2_KEY %}✅{% else %}❌{% endif %} Google OAuth2 Key configured</li>
+            <li>{% if SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET %}✅{% else %}❌{% endif %} Google OAuth2 Secret configured</li>
+        </ul>
+    </div>
+{% endblock %}

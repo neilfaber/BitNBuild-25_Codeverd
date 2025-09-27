@@ -1,0 +1,87 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+
+# Django
+*.log
+staticfiles/
+media/
+
+# VS Code
+.vscode/
+
+# Environment files
+.env
+env/
+.venv/
+venv/
+ENV/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Python egg files
+*.egg-info/
+*.egg
+
+dist/
+build/
+.eggs/
+
+# Coverage reports
+htmlcov/
+.coverage
+.tox/
+
+# Test output
+*.cover
+*.py,cover
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+
+# Pytest
+.cache/
+
+# pipenv
+Pipfile.lock
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# Ignore local settings
+local_settings.py
+
+# Ignore secrets
+secrets.json
+
+# Ignore node modules (if any)
+node_modules/
+
+# Ignore backup files
+*~
+*.bak
+*.swp
+*.swo
+
+# Ignore temporary files
+*.tmp
+*.temp
+
+# Ignore coverage
+.coverage*
+
+# Ignore celery beat schedule files
+celerybeat-schedule
+
+# Ignore pytest cache
+.pytest_cache/
+
+# Ignore migrations if needed (uncomment if you want to ignore them)
+# */migrations/*
+# !*/migrations/__init__.py

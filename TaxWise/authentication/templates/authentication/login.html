@@ -1,0 +1,35 @@
+{% extends 'authentication/base.html' %}
+
+{% block title %}Login - TaxWise Google OAuth Demo{% endblock %}
+
+{% block header %}Login with Google{% endblock %}
+
+{% block content %}
+    <div class="status info">
+        <h3>🔐 Google OAuth2 Login</h3>
+        <p>Click the button below to authenticate with your Google account.</p>
+    </div>
+
+    <div style="text-align: center; margin: 40px 0;">
+        <a href="{% url 'social:begin' 'google-oauth2' %}" class="btn btn-google">
+            🔍 Login with Google
+        </a>
+    </div>
+
+    <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0;">
+        <h4>⚠️ Important Setup Notes:</h4>
+        <ul>
+            <li>Make sure your <code>.env</code> file contains valid Google OAuth2 credentials</li>
+            <li>Ensure your Google Cloud Console project has the OAuth2 API enabled</li>
+            <li>Add your domain (e.g., <code>http://127.0.0.1:8000</code>) to authorized origins</li>
+            <li>Add callback URL: <code>http://127.0.0.1:8000/auth/complete/google-oauth2/</code></li>
+        </ul>
+    </div>
+
+    <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px;">
+        <h4>📋 Required .env Variables:</h4>
+        <pre style="background-color: #e9ecef; padding: 10px; border-radius: 3px;">
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY=your_google_client_id_here
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET=your_google_client_secret_here</pre>
+    </div>
+{% endblock %}
