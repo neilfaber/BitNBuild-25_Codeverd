@@ -1,0 +1,340 @@
+{% extends "authentication/base.html" %}
+{% load static %}
+
+{% block title %}CIBIL Score Analysis - TaxWise{% endblock %}
+
+{% block extra_css %}
+<style>
+    .analysis-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
+    .analysis-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .trend-chart {
+        height: 300px;
+    }
+    
+    .factor-impact {
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+    }
+    
+    .impact-positive { 
+        background: linear-gradient(135deg, #e8f5e8, #f1f8e9);
+        border-left: 4px solid #28a745;
+    }
+    
+    .impact-negative { 
+        background: linear-gradient(135deg, #ffebee, #fce4ec);
+        border-left: 4px solid #dc3545;
+    }
+    
+    .impact-neutral { 
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border-left: 4px solid #6c757d;
+    }
+    
+    .metric-highlight {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #007bff;
+    }
+    
+    .trend-up { color: #28a745; }
+    .trend-down { color: #dc3545; }
+    .trend-neutral { color: #6c757d; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0 text-gray-800">
+                        <i class="fas fa-chart-bar text-primary me-2"></i>CIBIL Score Analysis
+                    </h1>
+                    <p class="text-muted mb-0">Detailed analysis of your credit score components and trends</p>
+                </div>
+                <div>
+                    <a href="{% url 'cibil:dashboard' %}" class="btn btn-outline-primary me-2">
+                        <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                    </a>
+                    <a href="{% url 'cibil:improve_score' %}" class="btn btn-success">
+                        <i class="fas fa-arrow-up me-1"></i>Improve Score
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Current Score Overview -->
+    <div class="row mb-4">
+        <div class="col-lg-4 mb-3">
+            <div class="analysis-card card border-0 shadow">
+                <div class="card-body text-center">
+                    <div class="display-4 text-primary mb-2">{{ score_record.calculated_score }}</div>
+                    <h5 class="text-{{ score_record.score_range|lower }}">{{ score_record.score_range }}</h5>
+                    <p class="text-muted mb-0">Current CIBIL Score</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mb-3">
+            <div class="analysis-card card border-0 shadow">
+                <div class="card-body text-center">
+                    <div class="display-4 text-info mb-2">{{ score_record.average_credit_utilization|floatformat:1 }}%</div>
+                    <h5 class="text-muted">Credit Utilization</h5>
+                    <p class="text-muted mb-0">
+                        {% if score_record.average_credit_utilization <= 30 %}
+                            <span class="text-success">Excellent</span>
+                        {% elif score_record.average_credit_utilization <= 50 %}
+                            <span class="text-warning">Fair</span>
+                        {% else %}
+                            <span class="text-danger">Needs Improvement</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mb-3">
+            <div class="analysis-card card border-0 shadow">
+                <div class="card-body text-center">
+                    <div class="display-4 text-success mb-2">{{ score_record.payment_history_percentage|floatformat:1 }}%</div>
+                    <h5 class="text-muted">On-Time Payments</h5>
+                    <p class="text-muted mb-0">
+                        {% if score_record.payment_history_percentage >= 95 %}
+                            <span class="text-success">Excellent</span>
+                        {% elif score_record.payment_history_percentage >= 85 %}
+                            <span class="text-info">Good</span>
+                        {% else %}
+                            <span class="text-danger">Needs Improvement</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Score Component Breakdown -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="analysis-card card border-0 shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie me-2"></i>Score Component Analysis
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="fw-bold">Payment History (35%)</span>
+                                    <span class="text-primary">{{ score_record.payment_history_score|floatformat:2 }}/1.0</span>
+                                </div>
+                                <div class="progress mb-1" style="height: 8px;">
+                                    <div class="progress-bar bg-success" style="width: {{ score_record.payment_history_score|floatformat:0 }}%"></div>
+                                </div>
+                                <small class="text-muted">{{ score_record.payment_history_percentage|floatformat:1 }}% payments on time</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="fw-bold">Credit Utilization (30%)</span>
+                                    <span class="text-primary">{{ score_record.credit_utilization_score|floatformat:2 }}/1.0</span>
+                                </div>
+                                <div class="progress mb-1" style="height: 8px;">
+                                    <div class="progress-bar bg-info" style="width: {{ score_record.credit_utilization_score|floatformat:0 }}%"></div>
+                                </div>
+                                <small class="text-muted">{{ score_record.average_credit_utilization|floatformat:1 }}% average utilization</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="fw-bold">Credit History (15%)</span>
+                                    <span class="text-primary">{{ score_record.credit_history_length_score|floatformat:2 }}/1.0</span>
+                                </div>
+                                <div class="progress mb-1" style="height: 8px;">
+                                    <div class="progress-bar bg-warning" style="width: {{ score_record.credit_history_length_score|floatformat:0 }}%"></div>
+                                </div>
+                                <small class="text-muted">{{ score_record.credit_history_months }} months history</small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="fw-bold">Credit Mix (10%)</span>
+                                    <span class="text-primary">{{ score_record.credit_mix_score|floatformat:2 }}/1.0</span>
+                                </div>
+                                <div class="progress mb-1" style="height: 8px;">
+                                    <div class="progress-bar bg-secondary" style="width: {{ score_record.credit_mix_score|floatformat:0 }}%"></div>
+                                </div>
+                                <small class="text-muted">{{ credit_statements|length }} credit accounts</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="fw-bold">New Credit (10%)</span>
+                                    <span class="text-primary">{{ score_record.new_credit_score|floatformat:2 }}/1.0</span>
+                                </div>
+                                <div class="progress mb-1" style="height: 8px;">
+                                    <div class="progress-bar bg-danger" style="width: {{ score_record.new_credit_score|floatformat:0 }}%"></div>
+                                </div>
+                                <small class="text-muted">Recent credit activity</small>
+                            </div>
+
+                            <div class="mt-4 p-3 bg-light rounded">
+                                <h6 class="mb-2">Key Metrics</h6>
+                                <div class="row text-center">
+                                    <div class="col-6">
+                                        <div class="metric-highlight">₹{{ score_record.total_credit_limit|floatformat:0 }}</div>
+                                        <small class="text-muted">Total Credit Limit</small>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="metric-highlight text-{% if score_record.late_payments_count > 0 %}danger{% else %}success{% endif %}">
+                                            {{ score_record.late_payments_count }}
+                                        </div>
+                                        <small class="text-muted">Late Payments</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Factor Impacts -->
+        <div class="col-lg-4">
+            <div class="analysis-card card border-0 shadow">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-balance-scale me-2"></i>Factor Impacts
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for factor in factor_impacts %}
+                        <div class="factor-impact {% if factor.impact_points > 0 %}impact-positive{% elif factor.impact_points < 0 %}impact-negative{% else %}impact-neutral{% endif %}">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="fw-bold small">{{ factor.get_factor_type_display }}</span>
+                                <span class="badge {% if factor.impact_points > 0 %}bg-success{% elif factor.impact_points < 0 %}bg-danger{% else %}bg-secondary{% endif %}">
+                                    {% if factor.impact_points > 0 %}+{% endif %}{{ factor.impact_points }}
+                                </span>
+                            </div>
+                            <p class="mb-0 text-muted small">{{ factor.factor_description }}</p>
+                        </div>
+                    {% empty %}
+                        <p class="text-muted text-center">No factor impacts calculated</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Credit Statements Analysis -->
+    {% if credit_statements %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="analysis-card card border-0 shadow">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-credit-card me-2"></i>Recent Credit Card Activity
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Bank</th>
+                                    <th>Statement Date</th>
+                                    <th>Current Balance</th>
+                                    <th>Credit Limit</th>
+                                    <th>Utilization</th>
+                                    <th>Trend</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for statement in credit_statements %}
+                                <tr>
+                                    <td>{{ statement.bank_name|default:"Unknown Bank" }}</td>
+                                    <td>{{ statement.statement_date|date:"M d, Y" }}</td>
+                                    <td>₹{{ statement.current_balance|floatformat:0 }}</td>
+                                    <td>₹{{ statement.total_credit_limit|floatformat:0 }}</td>
+                                    <td>
+                                        {% widthratio statement.current_balance statement.total_credit_limit 100 as utilization %}
+                                        <span class="badge {% if utilization > 70 %}bg-danger{% elif utilization > 30 %}bg-warning{% else %}bg-success{% endif %}">
+                                            {{ utilization }}%
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-arrow-up text-success"></i>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- AI Insights -->
+    {% if ai_insights %}
+    <div class="row">
+        <div class="col-12">
+            <div class="analysis-card card border-0 shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="fas fa-lightbulb me-2"></i>AI-Powered Insights
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if ai_insights.improvement_suggestions %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">Improvement Opportunities</h6>
+                            {% for suggestion in ai_insights.improvement_suggestions %}
+                            <div class="alert alert-info" role="alert">
+                                <strong>{{ suggestion.description }}</strong><br>
+                                <small class="text-muted">
+                                    Impact: +{{ suggestion.impact_points }} points | 
+                                    Timeframe: {{ suggestion.timeframe }}
+                                </small>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            {% if ai_insights.risk_factors %}
+                            <h6 class="text-danger mb-3">Risk Factors</h6>
+                            {% for risk in ai_insights.risk_factors %}
+                            <div class="alert alert-warning" role="alert">
+                                <strong>{{ risk.description }}</strong><br>
+                                <small class="text-muted">{{ risk.recommendation }}</small>
+                            </div>
+                            {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

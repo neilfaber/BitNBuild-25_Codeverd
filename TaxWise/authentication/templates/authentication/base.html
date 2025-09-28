@@ -483,6 +483,49 @@
             0%, 100% { transform: translateY(0px); }
             50% { transform: translateY(-10px); }
         }
+
+        /* Dropdown Menu Styles */
+        .nav-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .nav-dropdown .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            min-width: 200px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            padding: 8px 0;
+            z-index: 1000;
+            border: 1px solid #e9ecef;
+        }
+
+        .nav-dropdown:hover .dropdown-menu {
+            display: block;
+        }
+
+        .nav-dropdown .dropdown-menu a {
+            display: block;
+            padding: 8px 16px;
+            color: #333;
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+
+        .nav-dropdown .dropdown-menu a:hover {
+            background-color: #f8f9fa;
+            color: #007bff;
+        }
+
+        .nav-dropdown > a::after {
+            content: " ▼";
+            font-size: 0.8em;
+            margin-left: 4px;
+        }
     </style>
     
     {% block extra_css %}{% endblock %}
@@ -501,7 +544,23 @@
                     {% if user.is_authenticated %}
                         <li><a href="{% url 'tax_optimization:home' %}"><i class="fas fa-brain"></i> Tax AI</a></li>
                         <li><a href="{% url 'analyzer:upload' %}"><i class="fas fa-file-invoice-dollar"></i> Analyzer</a></li>
-                        <li><a href="{% url 'cibil:dashboard' %}"><i class="fas fa-chart-line"></i> CIBIL Score</a></li>
+                        <li class="nav-dropdown">
+                            <a href="{% url 'cibil:dashboard' %}"><i class="fas fa-chart-line"></i> CIBIL Advisor</a>
+                            <div class="dropdown-menu">
+                                <a href="{% url 'cibil:dashboard' %}">
+                                    <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                                </a>
+                                <a href="{% url 'cibil:score_analysis' %}">
+                                    <i class="fas fa-chart-bar me-2"></i>Score Analysis
+                                </a>
+                                <a href="{% url 'cibil:improve_score' %}">
+                                    <i class="fas fa-arrow-up me-2"></i>Improve Score
+                                </a>
+                                <a href="{% url 'cibil:what_if_analysis' %}">
+                                    <i class="fas fa-calculator me-2"></i>What-If Scenarios
+                                </a>
+                            </div>
+                        </li>
                         <li><a href="{% url 'authentication:profile' %}"><i class="fas fa-user"></i> Profile</a></li>
                         <li><a href="{% url 'authentication:logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
                     {% else %}
