@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "PlanCrafter",
+  "version": "1.0",
+  "description": "A Chrome extension for patients to check their appointments and medicine timings.",
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "profile.jpg",
+      "48": "profile.jpg",
+      "128": "profile.jpg"
+    }
+  },
+  "permissions": ["storage", "activeTab", "notifications"],
+  "background": {
+    "service_worker": "background.js"
+  }
+
+}

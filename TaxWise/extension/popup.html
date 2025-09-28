@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Event Planner</title>
+  <style>
+    body {
+      width: 350px;
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+    .container {
+      padding: 20px;
+    }
+    .profile {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .profile img {
+      border-radius: 50%;
+      width: 100px;
+      height: 100px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      font-size: 24px;
+      text-align: center;
+      margin-bottom: 10px;
+      color: #007bff;
+    }
+    h3 {
+      font-size: 18px;
+      text-align: center;
+      margin-bottom: 10px;
+      color: #7abaff;
+    }
+    .section {
+      margin-bottom: 20px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 10px;
+      background-color: #fff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .section h2 {
+      font-size: 18px;
+      margin-bottom: 10px;
+      color: #444;
+      text-align: center;
+    }
+    .item {
+      font-size: 14px;
+      margin: 5px 0;
+      padding: 10px;
+      background-color: #f9f9f9;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      transition: background-color 0.3s;
+    }
+    .item:hover {
+      background-color: #e6e6e6;
+    }
+    .button {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      background-color: #007bff;
+      color: white;
+      text-align: center;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .button:hover {
+      background-color: #0056b3;
+    }
+    .countdown {
+      font-weight: bold;
+      color: #ff0000;
+    }
+    .timestamp {
+      font-size: 12px;
+      color: #777;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="profile">
+      <img src="profile.jpg" alt="Profile Photo">
+    </div>
+    <h1>Yash Punmiya</h1>
+    <h3>Host</h3>
+    <div class="section" id="next-appointment-section">
+      <h2>Next Event</h2>
+      <div class="item">
+        <span id="next-appointment">Loading...</span>
+        <br>
+        <span class="countdown" id="appointment-countdown">Loading...</span>
+      </div>
+    </div>
+    <div class="section" id="appointments-section">
+      <h2>All Events</h2>
+      <div id="appointments-list">Loading...</div>
+    </div>
+    <div class="section" id="medicines-section">
+      <h2>Important Tasks</h2>
+      <div id="medicines-list">Loading...</div>
+    </div>
+    <button class="button" id="emergencyButton">Emergency Meet</button>
+
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
