@@ -1,7 +1,7 @@
 /* TaxWise Frontend JavaScript */
 
 // API Configuration
-const API_BASE_URL = '/api/';
+const API_BASE_URL = '/tax-ai/api/';
 const API_ENDPOINTS = {
     calculate: 'calculate/',
     classify: 'classify/',
@@ -25,8 +25,8 @@ const TaxWiseApp = {
     
     // Setup global event listeners
     setupEventListeners() {
-        // Form validation
-        document.querySelectorAll('form').forEach(form => {
+        // Form validation - only intercept forms without data-no-intercept attribute
+        document.querySelectorAll('form:not([data-no-intercept])').forEach(form => {
             form.addEventListener('submit', this.handleFormSubmission.bind(this));
         });
         
@@ -176,9 +176,14 @@ const TaxWiseApp = {
             method: method,
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': this.getCSRFToken()
             }
         };
+        
+        // Add CSRF token if available (for non-exempt endpoints)
+        const csrfToken = this.getCSRFToken();
+        if (csrfToken) {
+            options.headers['X-CSRFToken'] = csrfToken;
+        }
         
         if (method !== 'GET' && data) {
             options.body = JSON.stringify(data);
@@ -195,6 +200,13 @@ const TaxWiseApp = {
     
     // Get CSRF token
     getCSRFToken() {
+        // Try meta tag first
+        const metaToken = document.querySelector('meta[name="csrf-token"]');
+        if (metaToken) {
+            return metaToken.getAttribute('content');
+        }
+        
+        // Fallback to cookies
         const cookies = document.cookie.split(';');
         for (let cookie of cookies) {
             const [name, value] = cookie.trim().split('=');

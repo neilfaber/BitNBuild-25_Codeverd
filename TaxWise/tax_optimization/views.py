@@ -80,9 +80,15 @@ def recommendations_page(request):
 @csrf_exempt
 def calculate_tax_simple(request):
     """Simple tax calculation endpoint for backward compatibility"""
+    print(f"calculate_tax_simple called with method: {request.method}")
+    print(f"Request path: {request.path}")
+    print(f"Request headers: {dict(request.headers)}")
+    
     if request.method == 'POST':
         try:
+            print(f"Request body: {request.body.decode('utf-8')}")
             data = json.loads(request.body)
+            print(f"Parsed data: {data}")
             
             # Get income (support both field names)
             annual_income = data.get('annual_income', 0)
@@ -125,12 +131,20 @@ def calculate_tax_simple(request):
                 }
             })
             
+        except json.JSONDecodeError as e:
+            print(f"JSON decode error: {e}")
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Invalid JSON data'
+            }, status=400)
         except Exception as e:
+            print(f"Calculation error: {e}")
             return JsonResponse({
                 'status': 'error',
                 'message': str(e)
             }, status=400)
     
+    print(f"Method not allowed: {request.method}")
     return JsonResponse({
         'status': 'error',
         'message': 'Method not allowed'

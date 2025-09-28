@@ -672,6 +672,124 @@ def generate_fallback_improvement_insights(score_data, improvement_plan):
     }
 
 
+def handle_import_existing_data(request):
+    """Handle importing CIBIL data from existing credit card statements"""
+    try:
+        # Calculate score from uploaded credit card data
+        calculator = CIBILScoreCalculator(request.user)
+        score_result = calculator.calculate_comprehensive_score()
+        
+        if score_result is None:
+            messages.error(request, "No credit card data found to import. Please upload statements first or use manual entry.")
+            context = {
+                'show_choice_screen': True,
+                'has_data': False,
+                'has_credit_data': False,
+                'error_message': "No credit card data available for import."
+            }
+            return render(request, 'cibil/dashboard.html', context)
+        
+        # Validate score result
+        if not isinstance(score_result, dict) or 'final_score' not in score_result:
+            messages.error(request, "Error processing credit card data. Please try manual entry.")
+            context = {
+                'show_choice_screen': True,
+                'has_data': False,
+                'has_credit_data': True,
+                'error_message': "Error calculating CIBIL score from uploaded data."
+            }
+            return render(request, 'cibil/dashboard.html', context)
+        
+        # Save score to database
+        statements = CreditCardStatement.objects.filter(user=request.user)
+        period_start = statements.aggregate(start=Min('billing_period_start'))['start']
+        period_end = statements.aggregate(end=Max('statement_date'))['end']
+        
+        # Delete existing score to create fresh one
+        CIBILScore.objects.filter(user=request.user).delete()
+        
+        score_record = CIBILScore.objects.create(
+            user=request.user,
+            calculated_score=score_result['final_score'],
+            score_range=score_result['score_range'],
+            payment_history_score=score_result['component_scores']['payment_history'],
+            credit_utilization_score=score_result['component_scores']['credit_utilization'],
+            credit_history_length_score=score_result['component_scores']['credit_history_length'],
+            credit_mix_score=score_result['component_scores']['credit_mix'],
+            new_credit_score=score_result['component_scores']['new_credit'],
+            payment_history_percentage=score_result['metrics'].get('payment_history_percentage', 0),
+            average_credit_utilization=score_result['metrics'].get('average_utilization', 0),
+            credit_history_months=score_result['metrics'].get('credit_history_months', 0),
+            total_credit_limit=Decimal(str(score_result['metrics'].get('total_credit_limit', 0))),
+            total_outstanding_balance=Decimal(str(score_result['metrics'].get('average_outstanding_balance', 0))),
+            late_payments_count=score_result['metrics'].get('late_payments', 0),
+            data_source_period_start=period_start,
+            data_source_period_end=period_end
+        )
+        
+        # Generate AI insights
+        ai_insights = generate_ai_insights(score_result, request.user)
+        score_record.improvement_suggestions = ai_insights.get('improvement_suggestions', [])
+        score_record.positive_factors = ai_insights.get('positive_factors', [])
+        score_record.risk_factors = ai_insights.get('risk_factors', [])
+        score_record.save()
+        
+        # Save individual factor impacts
+        ScoreFactorImpact.objects.filter(cibil_score=score_record).delete()
+        for factor in score_result['score_factors']:
+            impact_level = 'NEUTRAL'
+            points = factor.get('points', 0)
+            
+            if points >= 50:
+                impact_level = 'VERY_POSITIVE'
+            elif points >= 20:
+                impact_level = 'POSITIVE' 
+            elif points >= 5:
+                impact_level = 'SLIGHTLY_POSITIVE'
+            elif points <= -50:
+                impact_level = 'VERY_NEGATIVE'
+            elif points <= -20:
+                impact_level = 'NEGATIVE'
+            elif points <= -5:
+                impact_level = 'SLIGHTLY_NEGATIVE'
+            
+            ScoreFactorImpact.objects.create(
+                cibil_score=score_record,
+                factor_type=factor['type'],
+                factor_description=factor['description'],
+                impact_level=impact_level,
+                impact_points=points
+            )
+        
+        messages.success(request, f"Successfully calculated CIBIL score from your credit card data! Your score is {score_record.calculated_score}")
+        return render_dashboard_with_existing_score(request, score_record)
+        
+    except Exception as e:
+        messages.error(request, f"Error importing data: {str(e)}. Please try manual entry.")
+        context = {
+            'show_choice_screen': True,
+            'has_data': False,
+            'has_credit_data': CreditCardStatement.objects.filter(user=request.user).exists(),
+            'error_message': f"Error importing credit card data: {str(e)}"
+        }
+        return render(request, 'cibil/dashboard.html', context)
+
+
+def show_manual_entry_form(request):
+    """Show the manual data entry form"""
+    
+    # Check if user has uploaded credit card data available for alternative import option
+    has_credit_data = CreditCardStatement.objects.filter(user=request.user).exists()
+    
+    context = {
+        'show_manual_entry': True,
+        'has_data': False,
+        'has_credit_data': has_credit_data,
+        'credit_statements_count': CreditCardStatement.objects.filter(user=request.user).count() if has_credit_data else 0,
+    }
+    return render(request, 'cibil/dashboard.html', context)
+
+
 def handle_manual_data_entry(request):
     """Handle manual CIBIL data entry from form submission"""
     try:
@@ -788,32 +906,38 @@ def render_dashboard_with_existing_score(request, score_record):
     
     # Generate basic AI insights for manual data
     ai_insights = {
-        'improvement_suggestions': [],
-        'positive_factors': [],
-        'risk_factors': []
+        'improvement_suggestions': score_record.improvement_suggestions or [],
+        'positive_factors': score_record.positive_factors or [],
+        'risk_factors': score_record.risk_factors or []
     }
     
-    # Add basic suggestions based on manual data
-    if score_record.average_credit_utilization > 30:
-        ai_insights['risk_factors'].append("High credit utilization (>30%) negatively impacts score")
-        ai_insights['improvement_suggestions'].append("Reduce credit utilization below 30% for better score")
-    
-    if score_record.late_payments_count > 0:
-        ai_insights['risk_factors'].append(f"{score_record.late_payments_count} late payments detected")
-        ai_insights['improvement_suggestions'].append("Focus on making all payments on time")
-    
-    if score_record.calculated_score >= 750:
-        ai_insights['positive_factors'].append("Excellent credit score - maintain current habits")
-    elif score_record.calculated_score >= 650:
-        ai_insights['positive_factors'].append("Good credit score with room for improvement")
+    # Add basic suggestions based on manual data if none exist
+    if not ai_insights['improvement_suggestions']:
+        if score_record.average_credit_utilization > 30:
+            ai_insights['risk_factors'].append("High credit utilization (>30%) negatively impacts score")
+            ai_insights['improvement_suggestions'].append("Reduce credit utilization below 30% for better score")
+        
+        if score_record.late_payments_count > 0:
+            ai_insights['risk_factors'].append(f"{score_record.late_payments_count} late payments detected")
+            ai_insights['improvement_suggestions'].append("Focus on making all payments on time")
+        
+        if score_record.calculated_score >= 750:
+            ai_insights['positive_factors'].append("Excellent credit score - maintain current habits")
+        elif score_record.calculated_score >= 650:
+            ai_insights['positive_factors'].append("Good credit score with room for improvement")
+
+    # Check if user has credit data available for re-import
+    has_credit_data = CreditCardStatement.objects.filter(user=request.user).exists()
     
     context = {
         'score_record': score_record,
         'has_data': True,
         'ai_insights': ai_insights,
         'is_manual_entry': True,
-        'credit_statements': [],  # Empty for manual entries
-        'factor_impacts': [],  # Empty for manual entries
+        'credit_statements': CreditCardStatement.objects.filter(user=request.user).order_by('-statement_date')[:5],
+        'factor_impacts': ScoreFactorImpact.objects.filter(cibil_score=score_record).order_by('-impact_points'),
+        'has_credit_data': has_credit_data,
+        'show_recalculate_options': True,  # Show options to recalculate
     }
     
     return render(request, 'cibil/dashboard.html', context)
@@ -824,126 +948,44 @@ def cibil_dashboard(request):
     
     # Handle manual data input
     if request.method == 'POST':
-        return handle_manual_data_entry(request)
+        action = request.POST.get('action')
+        
+        if action == 'manual_entry':
+            # Check if this is a request to show manual entry form or process form data
+            if 'credit_limit' in request.POST:
+                # This is form submission with data - process it
+                return handle_manual_data_entry(request)
+            else:
+                # This is a request to show manual entry form - show the form
+                return show_manual_entry_form(request)
+        elif action == 'import_data':
+            return handle_import_existing_data(request)
     
-    try:
-        # Try to calculate score from uploaded data
-        calculator = CIBILScoreCalculator(request.user)
-        score_result = calculator.calculate_comprehensive_score()
-        
-        # Check if we have existing manual score data
-        existing_score = CIBILScore.objects.filter(user=request.user).first()
-        
-        # If no PDF data but existing manual score, use that
-        if score_result is None and existing_score:
-            return render_dashboard_with_existing_score(request, existing_score)
-        
-        # If no data at all, show manual entry form
-        if score_result is None:
-            context = {
-                'show_manual_entry': True,
-                'has_data': False,
-                'sample_score_ranges': [
-                    {'range': 'EXCELLENT', 'min': 750, 'max': 900, 'color': 'success'},
-                    {'range': 'GOOD', 'min': 650, 'max': 749, 'color': 'info'},
-                    {'range': 'FAIR', 'min': 550, 'max': 649, 'color': 'warning'},
-                    {'range': 'POOR', 'min': 300, 'max': 549, 'color': 'danger'},
-                ]
-            }
-            return render(request, 'cibil/dashboard.html', context)
-        
-        # Validate that score_result is a dictionary with required keys
-        if not isinstance(score_result, dict) or 'final_score' not in score_result:
-            # Show manual entry instead of redirecting
-            context = {
-                'show_manual_entry': True,
-                'has_data': False,
-                'error_message': "Error calculating CIBIL score from uploaded data. Please enter manually or try uploading again."
-            }
-            return render(request, 'cibil/dashboard.html', context)
-        
-        # Save score to database
-        latest_score = CIBILScore.objects.filter(user=request.user).first()
-        
-        # Create or update score record
-        statements = CreditCardStatement.objects.filter(user=request.user)
-        period_start = statements.aggregate(start=Min('billing_period_start'))['start']
-        period_end = statements.aggregate(end=Max('statement_date'))['end']
-        
-        score_record, created = CIBILScore.objects.get_or_create(
-            user=request.user,
-            defaults={
-                'calculated_score': score_result['final_score'],
-                'score_range': score_result['score_range'],
-                'payment_history_score': score_result['component_scores']['payment_history'],
-                'credit_utilization_score': score_result['component_scores']['credit_utilization'],
-                'credit_history_length_score': score_result['component_scores']['credit_history_length'],
-                'credit_mix_score': score_result['component_scores']['credit_mix'],
-                'new_credit_score': score_result['component_scores']['new_credit'],
-                'payment_history_percentage': score_result['metrics'].get('payment_history_percentage', 0),
-                'average_credit_utilization': score_result['metrics'].get('average_utilization', 0),
-                'credit_history_months': score_result['metrics'].get('credit_history_months', 0),
-                'total_credit_limit': Decimal(str(score_result['metrics'].get('total_credit_limit', 0))),
-                'total_outstanding_balance': Decimal(str(score_result['metrics'].get('average_outstanding_balance', 0))),
-                'late_payments_count': score_result['metrics'].get('late_payments', 0),
-                'data_source_period_start': period_start,
-                'data_source_period_end': period_end
-            }
-        )
-        
-        # Generate AI insights
-        ai_insights = generate_ai_insights(score_result, request.user)
-        score_record.improvement_suggestions = ai_insights.get('improvement_suggestions', [])
-        score_record.positive_factors = ai_insights.get('positive_factors', [])
-        score_record.risk_factors = ai_insights.get('risk_factors', [])
-        score_record.save()
-        
-        # Save individual factor impacts
-        ScoreFactorImpact.objects.filter(cibil_score=score_record).delete()
-        for factor in score_result['score_factors']:
-            impact_level = 'NEUTRAL'
-            points = factor.get('points', 0)
-            
-            if points >= 50:
-                impact_level = 'VERY_POSITIVE'
-            elif points >= 20:
-                impact_level = 'POSITIVE' 
-            elif points >= 5:
-                impact_level = 'SLIGHTLY_POSITIVE'
-            elif points <= -50:
-                impact_level = 'VERY_NEGATIVE'
-            elif points <= -20:
-                impact_level = 'NEGATIVE'
-            elif points <= -5:
-                impact_level = 'SLIGHTLY_NEGATIVE'
-            
-            ScoreFactorImpact.objects.create(
-                cibil_score=score_record,
-                factor_type=factor['type'],
-                factor_description=factor['description'],
-                impact_level=impact_level,
-                impact_points=points
-            )
-        
-        context = {
-            'score_record': score_record,
-            'score_result': score_result,
-            'ai_insights': ai_insights,
-            'has_data': True,
-            'factor_impacts': ScoreFactorImpact.objects.filter(cibil_score=score_record).order_by('-impact_points'),
-            'credit_statements': statements.order_by('-statement_date')[:5]
-        }
-        
-        return render(request, 'cibil/dashboard.html', context)
-        
-    except Exception as e:
-        # Handle any unexpected errors - show manual entry form instead of redirecting
-        context = {
-            'show_manual_entry': True,
-            'has_data': False,
-            'error_message': f"Error calculating CIBIL score: {str(e)}. Please enter data manually."
-        }
-        return render(request, 'cibil/dashboard.html', context)
+    # Check if user has existing CIBIL score
+    existing_score = CIBILScore.objects.filter(user=request.user).first()
+    
+    # Check if user has uploaded credit card data available
+    has_credit_data = CreditCardStatement.objects.filter(user=request.user).exists()
+    
+    # If user already has a calculated score, show it
+    if existing_score:
+        return render_dashboard_with_existing_score(request, existing_score)
+    
+    # Show choice screen: manual entry OR import from existing data
+    context = {
+        'show_choice_screen': True,
+        'has_data': False,
+        'has_credit_data': has_credit_data,
+        'credit_statements_count': CreditCardStatement.objects.filter(user=request.user).count() if has_credit_data else 0,
+        'sample_score_ranges': [
+            {'range': 'EXCELLENT', 'min': 750, 'max': 900, 'color': 'success'},
+            {'range': 'GOOD', 'min': 650, 'max': 749, 'color': 'info'},
+            {'range': 'FAIR', 'min': 550, 'max': 649, 'color': 'warning'},
+            {'range': 'POOR', 'min': 300, 'max': 549, 'color': 'danger'},
+        ]
+    }
+    return render(request, 'cibil/dashboard.html', context)
+
 
 @login_required
 def score_history(request):
@@ -1240,3 +1282,41 @@ def improve_score(request):
     except Exception as e:
         messages.error(request, "Error loading improvement recommendations. Please try again.")
         return redirect('cibil:dashboard')
+
+
+@login_required
+def quick_import_cibil(request):
+    """Quick import CIBIL score from uploaded data - can be called via AJAX or direct"""
+    
+    if request.method == 'POST':
+        try:
+            # Check if user has uploaded data
+            has_credit_data = CreditCardStatement.objects.filter(user=request.user).exists()
+            if not has_credit_data:
+                if request.headers.get('Accept') == 'application/json':
+                    return JsonResponse({
+                        'status': 'error',
+                        'message': 'No credit card data found. Please upload statements first.'
+                    }, status=400)
+                else:
+                    messages.error(request, "No credit card data found. Please upload statements first.")
+                    return redirect('cibil:dashboard')
+            
+            # Delete any existing score to create fresh one
+            CIBILScore.objects.filter(user=request.user).delete()
+            
+            # Calculate score from uploaded data using existing function
+            return handle_import_existing_data(request)
+            
+        except Exception as e:
+            if request.headers.get('Accept') == 'application/json':
+                return JsonResponse({
+                    'status': 'error', 
+                    'message': f'Error importing data: {str(e)}'
+                }, status=500)
+            else:
+                messages.error(request, f"Error importing data: {str(e)}")
+                return redirect('cibil:dashboard')
+    
+    # GET request - redirect to dashboard
+    return redirect('cibil:dashboard')

@@ -462,6 +462,58 @@
             padding: 1rem;
         }
     }
+
+    /* Choice Screen Styles */
+    .choice-card {
+        transition: all 0.3s ease;
+        border: 2px solid #e9ecef !important;
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+    }
+
+    .choice-card:hover {
+        transform: translateY(-10px) scale(1.02);
+        box-shadow: var(--hover-shadow);
+        border-color: var(--primary-green) !important;
+    }
+
+    .choice-card .choice-icon {
+        transition: all 0.3s ease;
+    }
+
+    .choice-card:hover .choice-icon {
+        transform: scale(1.1);
+    }
+
+    .choice-card .feature-item {
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+
+    .choice-card:hover .feature-item {
+        color: var(--primary-green) !important;
+    }
+
+    .data-summary .alert {
+        border: none;
+        background: linear-gradient(135deg, var(--light-green), #dcfce7);
+        border: 2px solid var(--success-color);
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, var(--success-color), var(--primary-green));
+        border: none;
+        border-radius: 25px;
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: var(--card-shadow);
+    }
+
+    .btn-success:hover {
+        background: linear-gradient(135deg, var(--primary-green), var(--success-color));
+        transform: translateY(-2px);
+        box-shadow: var(--hover-shadow);
+    }
 </style>
 {% endblock %}
 
@@ -531,7 +583,196 @@
         </div>
     </div>
 
-    {% if show_manual_entry %}
+    <!-- Quick Actions Floating Button (only show if user has data but no score) -->
+    {% if has_credit_data and not has_data %}
+    <div class="position-fixed bottom-0 end-0 p-4" style="z-index: 1050;">
+        <div class="dropdown dropup">
+            <button class="btn btn-success btn-lg rounded-circle shadow-lg" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Quick Actions">
+                <i class="fas fa-bolt fa-lg"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow">
+                <li>
+                    <form method="POST" action="{% url 'cibil:quick_import' %}" data-no-intercept="true" class="dropdown-item-form">
+                        {% csrf_token %}
+                        <button type="submit" class="dropdown-item">
+                            <i class="fas fa-download me-2 text-success"></i>
+                            Quick Import CIBIL Score
+                        </button>
+                    </form>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <a class="dropdown-item" href="{% url 'analyzer:upload' %}">
+                        <i class="fas fa-upload me-2 text-info"></i>
+                        Upload More Statements
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Main Content Templates -->
+    {% if show_choice_screen %}
+    <!-- Choice Screen: Manual Entry or Import Data -->
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card border-0 shadow-lg">
+                <div class="card-header bg-gradient-primary text-white text-center">
+                    <h3 class="mb-0">
+                        <i class="fas fa-chart-line me-2"></i>
+                        Calculate Your CIBIL Score
+                    </h3>
+                    <p class="mb-0 mt-2 opacity-90">Choose how you want to calculate your CIBIL score</p>
+                </div>
+                <div class="card-body p-5">
+                    {% if error_message %}
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        {{ error_message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    {% endif %}
+
+                    <div class="row g-4">
+                        <!-- Manual Entry Option -->
+                        <div class="col-md-4">
+                            <div class="choice-card h-100 p-4 text-center border rounded-4 position-relative">
+                                <div class="choice-icon mb-3">
+                                    <i class="fas fa-keyboard fa-3x text-primary"></i>
+                                </div>
+                                <h4 class="mb-3">Manual Entry</h4>
+                                <p class="text-muted mb-4">
+                                    Enter your credit information manually if you know your details.
+                                </p>
+                                
+                                <div class="features mb-4">
+                                    <div class="feature-item mb-2">
+                                        <i class="fas fa-check-circle text-success me-2"></i>
+                                        Quick setup
+                                    </div>
+                                    <div class="feature-item mb-2">
+                                        <i class="fas fa-check-circle text-success me-2"></i>
+                                        No data needed
+                                    </div>
+                                </div>
+
+                                <form method="POST" action="{% url 'cibil:dashboard' %}" data-no-intercept="true">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="manual_entry">
+                                    <button type="submit" class="btn btn-primary btn-lg px-4">
+                                        <i class="fas fa-keyboard me-2"></i>
+                                        Enter Manually
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Import from Uploaded Data Option -->
+                        <div class="col-md-4">
+                            <div class="choice-card h-100 p-4 text-center border rounded-4 position-relative {% if not has_credit_data %}opacity-50{% endif %}">
+                                <div class="choice-icon mb-3">
+                                    <i class="fas fa-file-import fa-3x {% if has_credit_data %}text-success{% else %}text-muted{% endif %}"></i>
+                                </div>
+                                <h4 class="mb-3">Import from Data</h4>
+                                <p class="text-muted mb-4">
+                                    {% if has_credit_data %}
+                                        Use your uploaded credit card statements for automatic calculation.
+                                    {% else %}
+                                        No uploaded statements found. Upload first to use this option.
+                                    {% endif %}
+                                </p>
+                                
+                                {% if has_credit_data %}
+                                <div class="data-summary mb-3">
+                                    <div class="alert alert-success py-2">
+                                        <i class="fas fa-credit-card me-2"></i>
+                                        <small><strong>{{ credit_statements_count }}</strong> statements ready</small>
+                                    </div>
+                                </div>
+
+                                <div class="features mb-4">
+                                    <div class="feature-item mb-2">
+                                        <i class="fas fa-check-circle text-success me-2"></i>
+                                        Automatic calculation
+                                    </div>
+                                    <div class="feature-item mb-2">
+                                        <i class="fas fa-check-circle text-success me-2"></i>
+                                        Real data analysis
+                                    </div>
+                                </div>
+
+                                <form method="POST" action="{% url 'cibil:dashboard' %}" data-no-intercept="true">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="import_data">
+                                    <button type="submit" class="btn btn-success btn-lg px-4">
+                                        <i class="fas fa-download me-2"></i>
+                                        Import & Calculate
+                                    </button>
+                                </form>
+                                {% else %}
+                                <div class="features mb-4">
+                                    <div class="feature-item mb-2 text-muted">
+                                        <i class="fas fa-times-circle text-warning me-2"></i>
+                                        No data available
+                                    </div>
+                                </div>
+
+                                <a href="{% url 'analyzer:upload' %}" class="btn btn-outline-primary btn-lg px-4">
+                                    <i class="fas fa-upload me-2"></i>
+                                    Upload First
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Upload New Data Option -->
+                        <div class="col-md-4">
+                            <div class="choice-card h-100 p-4 text-center border rounded-4 position-relative">
+                                <div class="choice-icon mb-3">
+                                    <i class="fas fa-cloud-upload-alt fa-3x text-info"></i>
+                                </div>
+                                <h4 class="mb-3">Upload Statements</h4>
+                                <p class="text-muted mb-4">
+                                    Upload new credit card statements and then calculate your CIBIL score.
+                                </p>
+                                
+                                <div class="features mb-4">
+                                    <div class="feature-item mb-2">
+                                        <i class="fas fa-check-circle text-info me-2"></i>
+                                        Most accurate results
+                                    </div>
+                                    <div class="feature-item mb-2">
+                                        <i class="fas fa-check-circle text-info me-2"></i>
+                                        Latest data analysis
+                                    </div>
+                                </div>
+
+                                <a href="{% url 'analyzer:upload' %}" class="btn btn-info btn-lg px-4">
+                                    <i class="fas fa-upload me-2"></i>
+                                    Upload Statements
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Information Section -->
+                    <div class="row mt-5">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>How it works:</strong> 
+                                Your CIBIL score is calculated based on payment history (35%), credit utilization (30%), 
+                                credit history length (15%), credit mix (10%), and new credit inquiries (10%).
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% elif show_manual_entry %}
     <!-- Manual Data Entry Form -->
     <div class="row justify-content-center">
         <div class="col-lg-10">
@@ -582,7 +823,7 @@
                         </div>
                     </div>
 
-                    <form method="POST">
+                    <form method="POST" data-no-intercept="true">
                         {% csrf_token %}
                         
                         <!-- Credit Information Section -->
@@ -828,14 +1069,29 @@
                         {% endif %}
                     </p>
                     
-                    {% if is_manual_entry %}
-                    <form method="POST" class="d-inline">
-                        {% csrf_token %}
-                        <input type="hidden" name="show_edit_form" value="true">
-                        <button type="button" class="btn btn-outline-primary btn-sm mt-2" onclick="window.location.reload()">
-                            <i class="fas fa-edit me-1"></i>Update Data
-                        </button>
-                    </form>
+                    <!-- Recalculation Options -->
+                    {% if show_recalculate_options %}
+                    <div class="mt-3">
+                        <div class="btn-group-vertical d-grid gap-2" role="group">
+                            <form method="POST" action="{% url 'cibil:dashboard' %}" class="d-inline" data-no-intercept="true">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="manual_entry">
+                                <button type="submit" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-edit me-1"></i>Update Manually
+                                </button>
+                            </form>
+                            
+                            {% if has_credit_data %}
+                            <form method="POST" action="{% url 'cibil:dashboard' %}" class="d-inline" data-no-intercept="true">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="import_data">
+                                <button type="submit" class="btn btn-outline-success btn-sm">
+                                    <i class="fas fa-sync-alt me-1"></i>Recalculate from Data
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
                     {% endif %}
                 </div>
             </div>
@@ -1244,6 +1500,21 @@ formInputs.forEach(input => {
     
     input.addEventListener('blur', function() {
         this.parentElement.style.transform = 'scale(1)';
+    });
+});
+
+// Handle floating action button dropdown forms
+document.querySelectorAll('.dropdown-item-form button').forEach(button => {
+    button.addEventListener('click', function(e) {
+        const originalText = this.innerHTML;
+        this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+        this.disabled = true;
+        
+        // Re-enable after 10 seconds in case of issues
+        setTimeout(() => {
+            this.innerHTML = originalText;
+            this.disabled = false;
+        }, 10000);
     });
 });
 </script>
