@@ -1,23 +1,351 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Upload PDF - Transaction Analyzer</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Statement Analyzer - TaxWise</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { font-family: Arial, sans-serif; background: #f5f5f5; text-align: center; padding: 50px; }
-        .upload-box { background: white; padding: 40px; border-radius: 10px; width: 400px; margin: auto; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        input[type="file"] { margin: 20px 0; }
-        button { background: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }
-        button:hover { background: #45a049; }
+        .upload-area {
+            border: 3px dashed #007bff;
+            border-radius: 15px;
+            padding: 3rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%);
+        }
+        .upload-area:hover {
+            border-color: #0056b3;
+            background: linear-gradient(135deg, #e8f2ff 0%, #d4e7ff 100%);
+            transform: translateY(-2px);
+        }
+        .upload-area.dragover {
+            border-color: #28a745;
+            background: linear-gradient(135deg, #f8fff8 0%, #e8ffe8 100%);
+        }
+        .statement-type-card {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .statement-type-card:hover {
+            border-color: #007bff;
+            box-shadow: 0 4px 12px rgba(0,123,255,0.15);
+            transform: translateY(-2px);
+        }
+        .statement-type-card.selected {
+            border-color: #007bff;
+            background-color: #e7f3ff;
+        }
+        .recent-upload-card {
+            border-left: 4px solid #007bff;
+            transition: transform 0.2s;
+        }
+        .recent-upload-card:hover {
+            transform: translateX(5px);
+        }
     </style>
 </head>
-<body>
-    <div class="upload-box">
-        <h2>Upload Your Bank/Credit Card Statement</h2>
-        <form method="POST" enctype="multipart/form-data">
-            {% csrf_token %}
-            <input type="file" name="pdf" accept="application/pdf" required><br>
-            <button type="submit">Analyze PDF</button>
-        </form>
+<body class="bg-light">
+    <div class="container py-5">
+        <!-- Header -->
+        <div class="row mb-5">
+            <div class="col-12 text-center">
+                <h1 class="display-4 mb-3">
+                    <i class="fas fa-file-invoice-dollar text-primary me-3"></i>
+                    Financial Statement Analyzer
+                </h1>
+                <p class="lead text-muted">Upload your bank statements or credit card statements for AI-powered analysis</p>
+            </div>
+        </div>
+
+        <!-- Upload Section -->
+        <div class="row justify-content-center mb-5">
+            <div class="col-lg-8">
+                <div class="card shadow-lg border-0">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">
+                            <i class="fas fa-cloud-upload-alt me-2"></i>
+                            Upload Statement
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <!-- Statement Type Selection -->
+                        <div class="mb-4">
+                            <h5 class="mb-3">Select Statement Type</h5>
+                            <div class="row" id="statementTypeSelection">
+                                <div class="col-md-4">
+                                    <div class="statement-type-card" data-type="auto">
+                                        <div class="text-center">
+                                            <i class="fas fa-magic fa-3x text-info mb-3"></i>
+                                            <h6>Auto Detect</h6>
+                                            <p class="text-muted small">Let AI determine the statement type</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="statement-type-card" data-type="bank">
+                                        <div class="text-center">
+                                            <i class="fas fa-university fa-3x text-success mb-3"></i>
+                                            <h6>Bank Statement</h6>
+                                            <p class="text-muted small">Savings/Current account statement</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="statement-type-card" data-type="credit_card">
+                                        <div class="text-center">
+                                            <i class="fas fa-credit-card fa-3x text-warning mb-3"></i>
+                                            <h6>Credit Card</h6>
+                                            <p class="text-muted small">Credit card monthly statement</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Upload Form -->
+                        <form method="POST" enctype="multipart/form-data" id="uploadForm">
+                            {% csrf_token %}
+                            <input type="hidden" name="statement_type" id="statementType" value="auto">
+                            
+                            <div class="upload-area" id="uploadArea">
+                                <i class="fas fa-file-pdf fa-4x text-danger mb-3"></i>
+                                <h4 class="mb-2">Drop your PDF here</h4>
+                                <p class="text-muted mb-3">or click to browse</p>
+                                <input type="file" name="pdf" accept="application/pdf" id="pdfInput" style="display: none;">
+                                <button type="button" class="btn btn-primary btn-lg" id="browseButton">
+                                    <i class="fas fa-folder-open me-2"></i>
+                                    Choose PDF File
+                                </button>
+                            </div>
+
+                            <div id="fileInfo" class="mt-3" style="display: none;">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-file-pdf me-2"></i>
+                                    <strong>Selected:</strong> <span id="fileName"></span>
+                                    <span class="float-end">
+                                        <span id="fileSize"></span>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="text-center mt-4">
+                                <button type="submit" class="btn btn-success btn-lg px-5" id="submitButton" disabled>
+                                    <i class="fas fa-magic me-2"></i>
+                                    Analyze Statement
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Uploads Section -->
+        {% if recent_uploads or recent_credit_cards %}
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow border-0">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <i class="fas fa-history me-2"></i>
+                            Recent Uploads
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {% if recent_uploads %}
+                                <div class="col-md-6">
+                                    <h6 class="text-muted mb-3">Bank Statements</h6>
+                                    {% for upload in recent_uploads %}
+                                    <div class="card recent-upload-card mb-2">
+                                        <div class="card-body py-2">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <i class="fas fa-university text-success me-2"></i>
+                                                    <strong>{{ upload.file.name|default:"Bank Statement" }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">{{ upload.uploaded_at|date:"M d, Y H:i" }}</small>
+                                                </div>
+                                                <a href="{% url 'analyzer:detail' upload.pk %}" class="btn btn-outline-primary btn-sm">
+                                                    <i class="fas fa-eye me-1"></i>View
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            
+                            {% if recent_credit_cards %}
+                                <div class="col-md-6">
+                                    <h6 class="text-muted mb-3">Credit Card Statements</h6>
+                                    {% for statement in recent_credit_cards %}
+                                    <div class="card recent-upload-card mb-2">
+                                        <div class="card-body py-2">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <i class="fas fa-credit-card text-warning me-2"></i>
+                                                    <strong>{{ statement.bank_name }} ••{{ statement.card_number_last_four }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">{{ statement.statement_date|date:"M d, Y" }}</small>
+                                                </div>
+                                                <a href="{% url 'analyzer:detail' statement.uploaded_pdf.pk %}" class="btn btn-outline-primary btn-sm">
+                                                    <i class="fas fa-eye me-1"></i>View
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Features Section -->
+        <div class="row mt-5">
+            <div class="col-12">
+                <h3 class="text-center mb-4">What You'll Get</h3>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <i class="fas fa-chart-pie fa-3x text-primary mb-3"></i>
+                            <h5>Smart Categorization</h5>
+                            <p class="text-muted">AI automatically categorizes all transactions</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <i class="fas fa-credit-card fa-3x text-success mb-3"></i>
+                            <h5>Credit Analysis</h5>
+                            <p class="text-muted">Complete credit card statement breakdown</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <i class="fas fa-coins fa-3x text-warning mb-3"></i>
+                            <h5>Fees & Rewards</h5>
+                            <p class="text-muted">Track all fees, interest, and rewards earned</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <i class="fas fa-chart-line fa-3x text-info mb-3"></i>
+                            <h5>Tax Insights</h5>
+                            <p class="text-muted">Identify tax-deductible expenses</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Statement type selection
+        document.querySelectorAll('.statement-type-card').forEach(card => {
+            card.addEventListener('click', function() {
+                // Remove selected class from all cards
+                document.querySelectorAll('.statement-type-card').forEach(c => c.classList.remove('selected'));
+                
+                // Add selected class to clicked card
+                this.classList.add('selected');
+                
+                // Update hidden input
+                const type = this.dataset.type;
+                document.getElementById('statementType').value = type;
+            });
+        });
+
+        // Set default selection (auto)
+        document.querySelector('[data-type="auto"]').classList.add('selected');
+
+        // File upload handling
+        const uploadArea = document.getElementById('uploadArea');
+        const pdfInput = document.getElementById('pdfInput');
+        const browseButton = document.getElementById('browseButton');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const submitButton = document.getElementById('submitButton');
+
+        browseButton.addEventListener('click', () => pdfInput.click());
+        
+        uploadArea.addEventListener('click', (e) => {
+            if (e.target !== browseButton) {
+                pdfInput.click();
+            }
+        });
+
+        // Drag and drop functionality
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].type === 'application/pdf') {
+                pdfInput.files = files;
+                handleFileSelection(files[0]);
+            }
+        });
+
+        pdfInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelection(e.target.files[0]);
+            }
+        });
+
+        function handleFileSelection(file) {
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            fileInfo.style.display = 'block';
+            submitButton.disabled = false;
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Form submission validation
+        document.getElementById('uploadForm').addEventListener('submit', function(e) {
+            if (!pdfInput.files || pdfInput.files.length === 0) {
+                e.preventDefault();
+                alert('Please select a PDF file to analyze.');
+                return false;
+            }
+            
+            const file = pdfInput.files[0];
+            if (file.type !== 'application/pdf') {
+                e.preventDefault();
+                alert('Please select a valid PDF file.');
+                return false;
+            }
+            
+            // Show loading state
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+            submitButton.disabled = true;
+        });
+    </script>
 </body>
 </html>
