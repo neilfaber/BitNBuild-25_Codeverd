@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tax Calculator Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border: 1px solid #ddd; }
+        .pass { background: #d4edda; border-color: #c3e6cb; }
+        .fail { background: #f8d7da; border-color: #f5c6cb; }
+        .info { background: #d1ecf1; border-color: #bee5eb; }
+        table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: right; }
+        th { background: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h1>Tax Calculator Logic Test</h1>
+    <div id="results"></div>
+
+    <script>
+        // Tax calculation functions (copied from your calculator)
+        function calculateNewRegimeTax(income, deductions) {
+            const taxableIncome = Math.max(0, income - deductions);
+            let tax = 0;
+            
+            // New Tax Regime Slabs for FY 2024-25
+            if (taxableIncome > 300000) {
+                if (taxableIncome <= 700000) {
+                    tax = (taxableIncome - 300000) * 0.05;
+                } else if (taxableIncome <= 1000000) {
+                    tax = 20000 + (taxableIncome - 700000) * 0.10;
+                } else if (taxableIncome <= 1200000) {
+                    tax = 50000 + (taxableIncome - 1000000) * 0.15;
+                } else if (taxableIncome <= 1500000) {
+                    tax = 80000 + (taxableIncome - 1200000) * 0.20;
+                } else {
+                    tax = 140000 + (taxableIncome - 1500000) * 0.30;
+                }
+            }
+            
+            const cess = tax * 0.04;
+            return {
+                taxableIncome,
+                baseTax: tax,
+                cess,
+                totalTax: tax + cess,
+                effectiveRate: income > 0 ? ((tax + cess) / income * 100) : 0
+            };
+        }
+
+        function calculateOldRegimeTax(income, deductions) {
+            const taxableIncome = Math.max(0, income - deductions);
+            let tax = 0;
+            
+            if (taxableIncome > 250000) {
+                if (taxableIncome <= 500000) {
+                    tax = (taxableIncome - 250000) * 0.05;
+                } else if (taxableIncome <= 1000000) {
+                    tax = 12500 + (taxableIncome - 500000) * 0.20;
+                } else {
+                    tax = 112500 + (taxableIncome - 1000000) * 0.30;
+                }
+            }
+            
+            const cess = tax * 0.04;
+            return {
+                taxableIncome,
+                baseTax: tax,
+                cess,
+                totalTax: tax + cess,
+                effectiveRate: income > 0 ? ((tax + cess) / income * 100) : 0
+            };
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-IN', {
+                style: 'currency',
+                currency: 'INR',
+                maximumFractionDigits: 0
+            }).format(amount);
+        }
+
+        // Test cases
+        const testCases = [
+            {
+                name: "Your Example: ₹8,00,000 salary, no deductions",
+                income: 800000,
+                section80C: 0,
+                section80D: 0,
+                section80G: 0,
+                section24b: 0
+            },
+            {
+                name: "Optimized: ₹8,00,000 salary with full deductions",
+                income: 800000,
+                section80C: 150000,
+                section80D: 25000,
+                section80G: 50000,
+                section24b: 200000
+            },
+            {
+                name: "Lower Income: ₹5,00,000 salary",
+                income: 500000,
+                section80C: 100000,
+                section80D: 15000,
+                section80G: 0,
+                section24b: 0
+            },
+            {
+                name: "High Income: ₹15,00,000 salary with max deductions",
+                income: 1500000,
+                section80C: 150000,
+                section80D: 25000,
+                section80G: 100000,
+                section24b: 200000
+            }
+        ];
+
+        function runTests() {
+            const results = document.getElementById('results');
+            let html = '';
+
+            testCases.forEach((testCase, index) => {
+                // Calculate deductions
+                const newRegimeDeductions = 75000; // Only standard deduction
+                const oldRegimeDeductions = 50000 + 
+                    Math.min(testCase.section80C, 150000) + 
+                    Math.min(testCase.section80D, 25000) + 
+                    testCase.section80G + 
+                    Math.min(testCase.section24b, 200000);
+
+                // Calculate taxes
+                const newRegime = calculateNewRegimeTax(testCase.income, newRegimeDeductions);
+                const oldRegime = calculateOldRegimeTax(testCase.income, oldRegimeDeductions);
+
+                // Determine better regime
+                const savings = oldRegime.totalTax - newRegime.totalTax;
+                const betterRegime = savings > 0 ? 'New Regime' : 'Old Regime';
+                const savingsAmount = Math.abs(savings);
+
+                html += `
+                    <div class="test-result info">
+                        <h3>Test Case ${index + 1}: ${testCase.name}</h3>
+                        <table>
+                            <tr><th>Metric</th><th>New Regime</th><th>Old Regime</th></tr>
+                            <tr><td>Gross Income</td><td>${formatCurrency(testCase.income)}</td><td>${formatCurrency(testCase.income)}</td></tr>
+                            <tr><td>Deductions</td><td>${formatCurrency(newRegimeDeductions)}</td><td>${formatCurrency(oldRegimeDeductions)}</td></tr>
+                            <tr><td>Taxable Income</td><td>${formatCurrency(newRegime.taxableIncome)}</td><td>${formatCurrency(oldRegime.taxableIncome)}</td></tr>
+                            <tr><td>Base Tax</td><td>${formatCurrency(newRegime.baseTax)}</td><td>${formatCurrency(oldRegime.baseTax)}</td></tr>
+                            <tr><td>Cess (4%)</td><td>${formatCurrency(newRegime.cess)}</td><td>${formatCurrency(oldRegime.cess)}</td></tr>
+                            <tr><td><strong>Total Tax</strong></td><td><strong>${formatCurrency(newRegime.totalTax)}</strong></td><td><strong>${formatCurrency(oldRegime.totalTax)}</strong></td></tr>
+                            <tr><td>Effective Rate</td><td>${newRegime.effectiveRate.toFixed(2)}%</td><td>${oldRegime.effectiveRate.toFixed(2)}%</td></tr>
+                        </table>
+                        <div style="background: #fff3cd; padding: 10px; margin: 10px 0; border-radius: 5px;">
+                            <strong>Recommendation:</strong> ${betterRegime} saves ${formatCurrency(savingsAmount)} annually
+                        </div>
+                    </div>
+                `;
+            });
+
+            results.innerHTML = html;
+        }
+
+        // Run tests when page loads
+        runTests();
+    </script>
+</body>
+</html>

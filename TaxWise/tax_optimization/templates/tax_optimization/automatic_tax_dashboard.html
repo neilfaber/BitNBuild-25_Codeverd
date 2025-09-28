@@ -1,4 +1,4 @@
-{% extends "authentication/base.html" %}
+{% extends "tax_optimization/base.html" %}
 
 {% block title %}Automatic Tax Calculator - TaxWise{% endblock %}
 
@@ -73,30 +73,31 @@
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid mt-4">
+<div class="section-header">
+    <h1>
+        <i class="fas fa-calculator me-2"></i>Automatic Tax Calculator
+    </h1>
+    <p>Tax deductions calculated from your existing financial data</p>
+</div>
+
+<div class="container mt-4">
     {% if error %}
         <div class="alert alert-danger" role="alert">
             <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
         </div>
     {% else %}
-        <!-- Header Section -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h1 class="h3 mb-0 text-gray-800">
-                            <i class="fas fa-calculator me-2"></i>Automatic Tax Calculator
-                        </h1>
-                        <p class="text-muted">Tax deductions calculated from your existing financial data</p>
-                    </div>
-                    <div class="financial-year-selector">
-                        <strong>Financial Year:</strong> {{ tax_analysis.financial_year }}
-                        <br>
-                        <small class="text-muted">
-                            <i class="fas fa-info-circle me-1"></i>
-                            Calculated on {{ tax_analysis.summary.calculation_date|date:"M d, Y" }}
-                        </small>
-                    </div>
+        <!-- Top info row -->
+        <div class="row align-items-center mb-4">
+            <div class="col-md-8">
+                <small class="text-muted">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Calculated on {{ tax_analysis.summary.calculation_date|date:"M d, Y" }} • Financial Year: <strong>{{ tax_analysis.financial_year }}</strong>
+                </small>
+            </div>
+            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                <div class="badge bg-white text-success shadow-sm p-2">
+                    <i class="fas fa-calendar-alt me-1"></i>
+                    {{ tax_analysis.financial_year }}
                 </div>
             </div>
         </div>
@@ -104,7 +105,7 @@
         <!-- Summary Cards -->
         <div class="row mb-4">
             <div class="col-md-4">
-                <div class="card deduction-summary h-100">
+                <div class="card deduction-summary h-100 text-white">
                     <div class="card-body text-center">
                         <div class="section-icon">
                             <i class="fas fa-receipt"></i>
@@ -118,32 +119,34 @@
                 </div>
             </div>
             <div class="col-md-8">
-                <div class="card tax-savings-card h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">
-                            <i class="fas fa-piggy-bank me-2"></i>Estimated Tax Savings
+                <div class="card h-100">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-piggy-bank me-2 text-primary"></i>Estimated Tax Savings
                         </h5>
+                    </div>
+                    <div class="card-body">
                         <div class="row text-center">
                             <div class="col-md-4">
-                                <h6>10% Tax Bracket</h6>
-                                <div class="amount-display">
+                                <h6 class="text-muted">10% Tax Bracket</h6>
+                                <div class="amount-display text-dark">
                                     ₹{{ tax_analysis.summary.tax_savings_10_percent|floatformat:0 }}
                                 </div>
                             </div>
                             <div class="col-md-4">
-                                <h6>20% Tax Bracket</h6>
-                                <div class="amount-display">
+                                <h6 class="text-muted">20% Tax Bracket</h6>
+                                <div class="amount-display text-dark">
                                     ₹{{ tax_analysis.summary.tax_savings_20_percent|floatformat:0 }}
                                 </div>
                             </div>
                             <div class="col-md-4">
-                                <h6>30% Tax Bracket</h6>
-                                <div class="amount-display">
+                                <h6 class="text-muted">30% Tax Bracket</h6>
+                                <div class="amount-display text-dark">
                                     ₹{{ tax_analysis.summary.tax_savings_30_percent|floatformat:0 }}
                                 </div>
                             </div>
                         </div>
-                        <small class="mt-2 d-block">
+                        <small class="mt-2 d-block text-muted">
                             <i class="fas fa-info-circle me-1"></i>
                             Actual savings depend on your tax bracket
                         </small>
@@ -164,22 +167,30 @@
         <div class="row">
             {% for section, data in tax_analysis.deductions_by_section.items %}
             <div class="col-lg-6 col-xl-4 mb-4">
-                <div class="card tax-section-card h-100">
+                <div class="card h-100 shadow-sm">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start mb-3">
-                            <h5 class="card-title mb-0">
-                                {% if section == '80C' %}
-                                    <i class="fas fa-coins text-primary me-2"></i>Section 80C
-                                {% elif section == '80D' %}
-                                    <i class="fas fa-heartbeat text-danger me-2"></i>Section 80D
-                                {% elif section == '80G' %}
-                                    <i class="fas fa-hand-holding-heart text-success me-2"></i>Section 80G
-                                {% elif section == '24B' %}
-                                    <i class="fas fa-home text-warning me-2"></i>Section 24(b)
-                                {% endif %}
-                            </h5>
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    {% if section == '80C' %}
+                                        <i class="fas fa-coins fa-2x text-primary"></i>
+                                    {% elif section == '80D' %}
+                                        <i class="fas fa-heartbeat fa-2x text-danger"></i>
+                                    {% elif section == '80G' %}
+                                        <i class="fas fa-hand-holding-heart fa-2x text-success"></i>
+                                    {% elif section == '24B' %}
+                                        <i class="fas fa-home fa-2x text-warning"></i>
+                                    {% else %}
+                                        <i class="fas fa-shield-alt fa-2x text-muted"></i>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">{{ section }}</h6>
+                                    <small class="text-muted">{{ data.title|default:section }}</small>
+                                </div>
+                            </div>
                             {% if data.utilization_percentage %}
-                                <span class="badge badge-utilization
+                                <span class="badge badge-utilization rounded-pill px-3 py-2
                                     {% if data.utilization_percentage >= 80 %}bg-success
                                     {% elif data.utilization_percentage >= 50 %}bg-warning
                                     {% else %}bg-secondary
@@ -192,21 +203,21 @@
                         <!-- Amount Information -->
                         <div class="mb-3">
                             <div class="d-flex justify-content-between">
-                                <span>Eligible Deduction:</span>
+                                <span class="text-muted">Eligible Deduction</span>
                                 <strong>₹{{ data.eligible_deduction|floatformat:0 }}</strong>
                             </div>
                             {% if data.limit != 'No Limit' %}
-                                <div class="d-flex justify-content-between text-muted">
-                                    <span>Limit:</span>
+                                <div class="d-flex justify-content-between text-muted small">
+                                    <span>Limit</span>
                                     <span>₹{{ data.limit|floatformat:0 }}</span>
                                 </div>
-                                <div class="d-flex justify-content-between text-muted">
-                                    <span>Remaining:</span>
+                                <div class="d-flex justify-content-between text-muted small">
+                                    <span>Remaining</span>
                                     <span>₹{{ data.remaining_limit|floatformat:0 }}</span>
                                 </div>
                             {% else %}
-                                <div class="d-flex justify-content-between text-success">
-                                    <span>Limit:</span>
+                                <div class="d-flex justify-content-between text-success small">
+                                    <span>Limit</span>
                                     <span>{{ data.limit }}</span>
                                 </div>
                             {% endif %}
@@ -215,25 +226,24 @@
                         <!-- Utilization Bar -->
                         {% if data.utilization_percentage %}
                             <div class="utilization-bar mb-3">
-                                <div class="utilization-progress" 
-                                     style="width: {{ data.utilization_percentage }}%"></div>
+                                <div class="utilization-progress" style="width: {{ data.utilization_percentage }}%"></div>
                             </div>
                         {% endif %}
 
                         <!-- Sources Breakdown -->
                         {% if data.sources %}
-                            <div class="mb-3">
-                                <h6 class="text-muted mb-2">Sources:</h6>
+                            <div class="mb-3 small">
+                                <h6 class="text-muted mb-2">Sources</h6>
                                 {% for source, amount in data.sources.items %}
                                     {% if amount > 0 %}
-                                        <div class="d-flex justify-content-between small">
+                                        <div class="d-flex justify-content-between">
                                             <span class="text-capitalize">
                                                 {% if source == 'credit_card' %}Credit Card
                                                 {% elif source == 'bank_transactions' %}Bank Transactions
                                                 {% elif source == 'investments' %}Investments
                                                 {% elif source == 'credit_card_emi' %}Credit Card EMI
                                                 {% else %}{{ source }}
-                                                {% endif %}:
+                                                {% endif %}
                                             </span>
                                             <span>₹{{ amount|floatformat:0 }}</span>
                                         </div>
@@ -243,8 +253,7 @@
                         {% endif %}
 
                         <!-- View Details Button -->
-                        <button class="btn btn-outline-primary btn-sm w-100" 
-                                onclick="toggleDetails('{{ section }}')">
+                        <button class="btn btn-outline-primary btn-sm w-100" onclick="toggleDetails('{{ section }}')">
                             <i class="fas fa-eye me-2"></i>View Details
                         </button>
 
@@ -252,14 +261,14 @@
                         <div id="details-{{ section }}" class="section-details mt-3">
                             <!-- Transaction Details -->
                             {% if data.transactions %}
-                                <h6 class="text-muted">Recent Transactions:</h6>
+                                <h6 class="text-muted">Recent Transactions</h6>
                                 <div class="table-responsive">
                                     <table class="table table-sm">
                                         <tbody>
                                             {% for txn in data.transactions|slice:":5" %}
                                                 <tr>
                                                     <td class="text-nowrap small">{{ txn.date|date:"M d" }}</td>
-                                                    <td class="small">{{ txn.description|truncatechars:20 }}</td>
+                                                    <td class="small">{{ txn.description|truncatechars:30 }}</td>
                                                     <td class="text-end small">₹{{ txn.amount|floatformat:0 }}</td>
                                                 </tr>
                                             {% endfor %}
@@ -267,15 +276,13 @@
                                     </table>
                                 </div>
                                 {% if data.transactions|length > 5 %}
-                                    <small class="text-muted">
-                                        ... and {{ data.transactions|length|add:"-5" }} more transactions
-                                    </small>
+                                    <small class="text-muted">... and {{ data.transactions|length|add:"-5" }} more transactions</small>
                                 {% endif %}
                             {% endif %}
 
                             <!-- Recommendations -->
                             {% if data.recommendations %}
-                                <h6 class="text-muted mt-3">Recommendations:</h6>
+                                <h6 class="text-muted mt-3">Recommendations</h6>
                                 {% for rec in data.recommendations|slice:":3" %}
                                     <div class="recommendation-item">
                                         <small>{{ rec }}</small>
@@ -301,16 +308,14 @@
         <div class="row mt-4">
             <div class="col-12">
                 <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-lightbulb me-2"></i>Tax Optimization Recommendations
-                        </h5>
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0"><i class="fas fa-lightbulb me-2 text-warning"></i>Tax Optimization Recommendations</h5>
                     </div>
                     <div class="card-body">
                         <div class="row">
                             {% for rec in tax_analysis.recommendations %}
                             <div class="col-md-6 mb-2">
-                                <div class="recommendation-item">
+                                <div class="recommendation-item p-3 bg-light rounded">
                                     {{ rec }}
                                 </div>
                             </div>
@@ -328,10 +333,10 @@
                 <button class="btn btn-success me-2" onclick="saveTaxCalculation()">
                     <i class="fas fa-save me-2"></i>Save Calculation
                 </button>
-                <button class="btn btn-primary me-2" onclick="exportToPDF()">
+                <button class="btn btn-outline-primary me-2" onclick="exportToPDF()">
                     <i class="fas fa-file-pdf me-2"></i>Export PDF
                 </button>
-                <button class="btn btn-info" onclick="refreshCalculation()">
+                <button class="btn btn-outline-secondary" onclick="refreshCalculation()">
                     <i class="fas fa-sync me-2"></i>Refresh
                 </button>
             </div>
