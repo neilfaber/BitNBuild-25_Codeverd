@@ -471,6 +471,207 @@ def generate_fallback_insights(score_data):
     
     return insights
 
+
+def generate_improvement_insights_from_gemini(score_data, improvement_plan, user):
+    """
+    Generate personalized improvement insights using Gemini AI
+    """
+    try:
+        model = genai.GenerativeModel('gemini-2.0-flash-exp')
+        
+        # Prepare detailed prompt for improvement insights
+        prompt = f"""
+        As a CIBIL credit score expert, analyze this user's credit profile and provide personalized improvement recommendations.
+
+        CURRENT CREDIT PROFILE:
+        - Current CIBIL Score: {score_data['score']}/900
+        - Credit Utilization: {score_data['utilization']:.1f}%
+        - Payment History: {score_data['payment_history']:.1f}% on-time payments
+        - Credit History Length: {score_data['credit_age']} months
+        - Late Payments (last 12 months): {score_data['late_payments']}
+        - Total Credit Limit: ₹{score_data['credit_limit']:,.0f}
+
+        IDENTIFIED IMPROVEMENT AREAS:
+        {chr(10).join([f"- {plan['category']}: Current {plan['current']} → Target {plan['target']} (Potential +{plan['potential_boost']} points)" for plan in improvement_plan])}
+
+        Please provide:
+        1. PRIORITY ACTIONS: Top 3 most impactful actions to take immediately
+        2. STRATEGIC RECOMMENDATIONS: Long-term strategies for sustained improvement
+        3. TIMELINE INSIGHTS: Realistic expectations for score improvement
+        4. RISK WARNINGS: What to avoid that could harm the score
+        5. PERSONALIZED TIPS: Specific advice based on current credit profile
+        6. MOTIVATION MESSAGE: Encouraging message about improvement potential
+
+        Format as JSON with these keys: priority_actions, strategic_recommendations, timeline_insights, risk_warnings, personalized_tips, motivation_message
+
+        Each array item should have: description, impact_level (HIGH/MEDIUM/LOW), timeframe, specific_steps (array)
+        """
+
+        response = model.generate_content(prompt)
+        ai_text = response.text.strip()
+        
+        # Clean JSON response
+        if ai_text.startswith('```json'):
+            ai_text = ai_text[7:]
+        if ai_text.endswith('```'):
+            ai_text = ai_text[:-3]
+        
+        ai_insights = json.loads(ai_text)
+        
+        # Validate and structure the response
+        structured_insights = {
+            'priority_actions': ai_insights.get('priority_actions', []),
+            'strategic_recommendations': ai_insights.get('strategic_recommendations', []),
+            'timeline_insights': ai_insights.get('timeline_insights', []),
+            'risk_warnings': ai_insights.get('risk_warnings', []),
+            'personalized_tips': ai_insights.get('personalized_tips', []),
+            'motivation_message': ai_insights.get('motivation_message', 'You have great potential to improve your CIBIL score!'),
+            'ai_generated': True,
+            'generation_date': timezone.now().isoformat()
+        }
+        
+        return structured_insights
+        
+    except Exception as e:
+        print(f"Error generating improvement insights from Gemini: {e}")
+        return generate_fallback_improvement_insights(score_data, improvement_plan)
+
+
+def generate_fallback_improvement_insights(score_data, improvement_plan):
+    """
+    Generate fallback improvement insights when Gemini AI is not available
+    """
+    score = score_data['score']
+    utilization = score_data['utilization']
+    payment_history = score_data['payment_history']
+    
+    # Priority actions based on score profile
+    priority_actions = []
+    
+    if utilization > 30:
+        priority_actions.append({
+            'description': 'Reduce credit utilization below 30%',
+            'impact_level': 'HIGH',
+            'timeframe': '1-2 months',
+            'specific_steps': [
+                'Pay down existing balances',
+                'Make multiple payments per month',
+                'Request credit limit increases'
+            ]
+        })
+    
+    if score_data['late_payments'] > 0:
+        priority_actions.append({
+            'description': 'Eliminate all late payments going forward',
+            'impact_level': 'HIGH',
+            'timeframe': 'Immediate',
+            'specific_steps': [
+                'Set up automatic payments',
+                'Create calendar reminders',
+                'Pay at least minimum amounts on time'
+            ]
+        })
+    
+    if len(priority_actions) == 0:
+        priority_actions.append({
+            'description': 'Maintain excellent payment discipline',
+            'impact_level': 'MEDIUM',
+            'timeframe': 'Ongoing',
+            'specific_steps': [
+                'Continue making on-time payments',
+                'Keep utilization low',
+                'Monitor credit report regularly'
+            ]
+        })
+    
+    # Strategic recommendations
+    strategic_recommendations = [
+        {
+            'description': 'Build a diversified credit portfolio',
+            'impact_level': 'MEDIUM',
+            'timeframe': '6-12 months',
+            'specific_steps': [
+                'Consider different types of credit accounts',
+                'Maintain a mix of credit cards and loans',
+                'Keep old accounts active'
+            ]
+        },
+        {
+            'description': 'Monitor and optimize credit regularly',
+            'impact_level': 'MEDIUM',
+            'timeframe': 'Ongoing',
+            'specific_steps': [
+                'Check credit report monthly',
+                'Dispute any errors immediately',
+                'Track score improvements'
+            ]
+        }
+    ]
+    
+    # Timeline insights
+    timeline_insights = [
+        {
+            'description': 'Quick wins possible in 1-3 months',
+            'impact_level': 'HIGH',
+            'timeframe': '1-3 months',
+            'specific_steps': [
+                'Payment history improvements show quickly',
+                'Utilization changes reflect in 1-2 billing cycles',
+                'Score improvements of 20-50 points possible'
+            ]
+        }
+    ]
+    
+    # Risk warnings
+    risk_warnings = [
+        {
+            'description': 'Avoid closing old credit accounts',
+            'impact_level': 'HIGH',
+            'timeframe': 'Always',
+            'specific_steps': [
+                'Keep oldest accounts open',
+                'Use old cards occasionally',
+                'Only close accounts with annual fees if necessary'
+            ]
+        }
+    ]
+    
+    # Personalized tips based on score range
+    if score >= 750:
+        motivation = "Your score is already excellent! Focus on maintaining these good habits."
+        tips_focus = "maintenance"
+    elif score >= 650:
+        motivation = "You're in good territory! Small improvements can push you to excellent."
+        tips_focus = "optimization"
+    else:
+        motivation = "Great potential for improvement! Focus on the basics first."
+        tips_focus = "foundation"
+    
+    personalized_tips = [
+        {
+            'description': f'Score-specific advice for {tips_focus}',
+            'impact_level': 'MEDIUM',
+            'timeframe': 'Ongoing',
+            'specific_steps': [
+                f'Your {score} score has room for improvement',
+                'Focus on payment history and utilization first',
+                'Consider your score improvement potential'
+            ]
+        }
+    ]
+    
+    return {
+        'priority_actions': priority_actions,
+        'strategic_recommendations': strategic_recommendations,
+        'timeline_insights': timeline_insights,
+        'risk_warnings': risk_warnings,
+        'personalized_tips': personalized_tips,
+        'motivation_message': motivation,
+        'ai_generated': False,
+        'generation_date': timezone.now().isoformat()
+    }
+
+
 def handle_manual_data_entry(request):
     """Handle manual CIBIL data entry from form submission"""
     try:
@@ -849,3 +1050,193 @@ def what_if_analysis(request):
     }
     
     return render(request, 'cibil/what_if_analysis.html', context)
+
+
+@login_required
+def score_analysis(request):
+    """Detailed CIBIL score analysis view"""
+    try:
+        # Get user's latest score record
+        score_record = CIBILScore.objects.filter(user=request.user).first()
+        
+        if not score_record:
+            messages.error(request, "Please calculate your CIBIL score first.")
+            return redirect('cibil:dashboard')
+        
+        # Get credit statements for detailed analysis
+        from bank_analyzer.models import CreditStatement
+        credit_statements = CreditStatement.objects.filter(user=request.user).order_by('-statement_date')[:6]
+        
+        # Calculate month-over-month trends
+        score_history = CIBILScore.objects.filter(user=request.user).order_by('calculation_date')
+        trends = []
+        
+        for i, score in enumerate(score_history):
+            if i > 0:
+                prev_score = score_history[i-1]
+                change = score.calculated_score - prev_score.calculated_score
+                trends.append({
+                    'date': score.calculation_date,
+                    'score': score.calculated_score,
+                    'change': change,
+                    'change_percentage': (change / prev_score.calculated_score) * 100 if prev_score.calculated_score > 0 else 0
+                })
+        
+        # Calculate factor impacts
+        factor_impacts = ScoreFactorImpact.objects.filter(
+            cibil_score=score_record
+        ).order_by('-impact_points')
+        
+        # Generate detailed insights
+        ai_insights = generate_ai_insights({
+            'score': score_record.calculated_score,
+            'utilization': score_record.average_credit_utilization,
+            'payment_history': score_record.payment_history_percentage,
+            'credit_age': score_record.credit_history_months,
+            'late_payments': score_record.late_payments_count,
+            'credit_limit': score_record.total_credit_limit
+        }, request.user)
+        
+        context = {
+            'score_record': score_record,
+            'credit_statements': credit_statements,
+            'trends': trends,
+            'factor_impacts': factor_impacts,
+            'ai_insights': ai_insights,
+            'detailed_analysis': True
+        }
+        
+        return render(request, 'cibil/score_analysis.html', context)
+        
+    except Exception as e:
+        messages.error(request, "Error loading score analysis. Please try again.")
+        return redirect('cibil:dashboard')
+
+
+@login_required  
+def improve_score(request):
+    """CIBIL score improvement recommendations and action plan"""
+    try:
+        # Get user's latest score record
+        score_record = CIBILScore.objects.filter(user=request.user).first()
+        
+        if not score_record:
+            messages.error(request, "Please calculate your CIBIL score first.")
+            return redirect('cibil:dashboard')
+        
+        # Get basic AI insights for improvement suggestions (existing function)
+        ai_insights = generate_ai_insights({
+            'score': score_record.calculated_score,
+            'utilization': score_record.average_credit_utilization,
+            'payment_history': score_record.payment_history_percentage,
+            'credit_age': score_record.credit_history_months,
+            'late_payments': score_record.late_payments_count,
+            'credit_limit': score_record.total_credit_limit
+        }, request.user)
+        
+        # Calculate potential improvements
+        improvement_plan = []
+        
+        # Credit utilization improvement
+        if score_record.average_credit_utilization > 30:
+            target_utilization = 10  # Optimal utilization
+            potential_boost = min(80, (score_record.average_credit_utilization - target_utilization) * 2)
+            improvement_plan.append({
+                'category': 'Credit Utilization',
+                'current': f'{score_record.average_credit_utilization:.1f}%',
+                'target': f'{target_utilization}%',
+                'potential_boost': potential_boost,
+                'timeframe': '1-2 months',
+                'difficulty': 'Easy',
+                'actions': [
+                    'Pay down existing balances',
+                    'Request credit limit increases',
+                    'Spread balances across multiple cards'
+                ]
+            })
+        
+        # Payment history improvement
+        if score_record.late_payments_count > 0:
+            potential_boost = min(60, score_record.late_payments_count * 15)
+            improvement_plan.append({
+                'category': 'Payment History',
+                'current': f'{score_record.payment_history_percentage:.1f}% on-time',
+                'target': '100% on-time',
+                'potential_boost': potential_boost,
+                'timeframe': '3-6 months',
+                'difficulty': 'Easy',
+                'actions': [
+                    'Set up automatic payments',
+                    'Create payment reminders',
+                    'Pay at least minimum amounts on time'
+                ]
+            })
+        
+        # Credit history length improvement
+        if score_record.credit_history_months < 60:
+            potential_boost = 20
+            improvement_plan.append({
+                'category': 'Credit History Length',
+                'current': f'{score_record.credit_history_months} months',
+                'target': '60+ months',
+                'potential_boost': potential_boost,
+                'timeframe': '12+ months',
+                'difficulty': 'Passive',
+                'actions': [
+                    'Keep old accounts open',
+                    'Use old cards occasionally',
+                    'Avoid closing accounts unnecessarily'
+                ]
+            })
+        
+        # Credit mix improvement
+        from bank_analyzer.models import CreditStatement
+        credit_types = CreditStatement.objects.filter(user=request.user).values('bank_name').distinct().count()
+        if credit_types < 3:
+            potential_boost = 25
+            improvement_plan.append({
+                'category': 'Credit Mix',
+                'current': f'{credit_types} credit types',
+                'target': '3+ credit types',
+                'potential_boost': potential_boost,
+                'timeframe': '6-12 months',
+                'difficulty': 'Moderate',
+                'actions': [
+                    'Consider different types of credit',
+                    'Add installment loans if needed',
+                    'Maintain variety in credit products'
+                ]
+            })
+        
+        # Calculate total potential improvement
+        total_potential = sum(plan['potential_boost'] for plan in improvement_plan)
+        projected_score = min(900, score_record.calculated_score + total_potential)
+        
+        # Get detailed improvement insights from Gemini AI
+        gemini_insights = generate_improvement_insights_from_gemini({
+            'score': score_record.calculated_score,
+            'utilization': score_record.average_credit_utilization,
+            'payment_history': score_record.payment_history_percentage,
+            'credit_age': score_record.credit_history_months,
+            'late_payments': score_record.late_payments_count,
+            'credit_limit': float(score_record.total_credit_limit)
+        }, improvement_plan, request.user)
+        
+        # Get recent simulations
+        simulations = ScoreSimulation.objects.filter(user=request.user).order_by('-created_at')[:5]
+        
+        context = {
+            'score_record': score_record,
+            'improvement_plan': improvement_plan,
+            'total_potential': total_potential,
+            'projected_score': projected_score,
+            'ai_insights': ai_insights,
+            'gemini_insights': gemini_insights,
+            'simulations': simulations
+        }
+        
+        return render(request, 'cibil/improve_score.html', context)
+        
+    except Exception as e:
+        messages.error(request, "Error loading improvement recommendations. Please try again.")
+        return redirect('cibil:dashboard')

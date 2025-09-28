@@ -17,7 +17,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils.decorators import method_decorator
 from django.views import View
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -388,20 +388,20 @@ def get_recommendations_simple(request):
 # ========================================
 
 def cibil_dashboard(request):
-    """CIBIL Score dashboard page"""
-    return render(request, 'tax_optimization/cibil_dashboard.html')
+    """CIBIL Score dashboard page - redirects to comprehensive CIBIL app dashboard"""
+    return redirect('cibil:dashboard')
 
 def cibil_analysis(request):
-    """Detailed CIBIL analysis page"""
-    return render(request, 'tax_optimization/cibil_analysis.html')
+    """Detailed CIBIL analysis page - redirects to comprehensive CIBIL dashboard"""
+    return redirect('cibil:dashboard')
 
 def cibil_recommendations(request):
-    """CIBIL improvement recommendations page"""
-    return render(request, 'tax_optimization/cibil_recommendations.html')
+    """CIBIL improvement recommendations page - redirects to comprehensive CIBIL dashboard"""
+    return redirect('cibil:dashboard')
 
 def cibil_whatif(request):
-    """What-if scenarios page"""
-    return render(request, 'tax_optimization/cibil_whatif.html')
+    """What-if scenarios page - redirects to CIBIL what-if analysis"""
+    return redirect('cibil:what_if_analysis')
 
 @csrf_exempt
 def get_cibil_score(request):
