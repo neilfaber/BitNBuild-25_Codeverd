@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Credit Card Statement Analysis - TaxWise</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .credit-card-mockup {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .credit-card-mockup::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+        }
+        .summary-card {
+            border-left: 4px solid #007bff;
+            transition: transform 0.2s;
+        }
+        .summary-card:hover {
+            transform: translateY(-2px);
+        }
+        .summary-card.balance {
+            border-left-color: #dc3545;
+        }
+        .summary-card.limit {
+            border-left-color: #28a745;
+        }
+        .summary-card.due {
+            border-left-color: #ffc107;
+        }
+        .transaction-item {
+            border-left: 4px solid #007bff;
+            margin-bottom: 0.5rem;
+            transition: background-color 0.2s;
+        }
+        .transaction-item:hover {
+            background-color: #f8f9fa;
+        }
+        .transaction-item.purchase {
+            border-left-color: #dc3545;
+        }
+        .transaction-item.payment {
+            border-left-color: #28a745;
+        }
+        .transaction-item.credit {
+            border-left-color: #17a2b8;
+        }
+        .transaction-item.fee {
+            border-left-color: #fd7e14;
+        }
+        .utilization-bar {
+            height: 20px;
+            background-color: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .utilization-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745 0%, #ffc107 70%, #dc3545 100%);
+            transition: width 0.3s ease;
+        }
+        .reward-badge {
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            color: #333;
+            border-radius: 20px;
+            padding: 0.25rem 0.75rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container py-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="text-center mb-0">
+                    <i class="fas fa-credit-card text-primary me-2"></i>
+                    Credit Card Statement Analysis
+                </h1>
+                <p class="text-center text-muted">Comprehensive analysis of your credit card statement</p>
+            </div>
+        </div>
+
+        {% if analysis.error %}
+            <div class="alert alert-danger" role="alert">
+                <h4 class="alert-heading">Analysis Error</h4>
+                <p>{{ analysis.error }}</p>
+                {% if analysis.raw_output %}
+                    <hr>
+                    <pre class="mb-0">{{ analysis.raw_output }}</pre>
+                {% endif %}
+            </div>
+        {% else %}
+            <!-- Credit Card Overview -->
+            {% if statement %}
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="credit-card-mockup">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h4 class="mb-1">{{ statement.bank_name|default:"Credit Card" }}</h4>
+                                <p class="mb-2">{{ statement.card_type }} •••• {{ statement.card_number_last_four }}</p>
+                                <h5 class="mb-0">{{ statement.cardholder_name|default:"Card Holder" }}</h5>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <div class="mt-3">
+                                    <small class="opacity-75">Statement Date</small>
+                                    <div>{{ statement.statement_date|default:"N/A" }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-6">
+                                <small class="opacity-75">Credit Limit</small>
+                                <div class="h5">₹{{ statement.total_credit_limit|floatformat:2 }}</div>
+                            </div>
+                            <div class="col-6 text-end">
+                                <small class="opacity-75">Available Credit</small>
+                                <div class="h5">₹{{ statement.available_credit|floatformat:2 }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Account Summary Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card summary-card balance">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="card-title text-danger">Current Balance</h6>
+                                    <h4 class="mb-0">₹{{ statement.current_balance|floatformat:2 }}</h4>
+                                </div>
+                                <i class="fas fa-wallet fa-2x text-danger opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card summary-card due">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="card-title text-warning">Amount Due</h6>
+                                    <h4 class="mb-0">₹{{ statement.total_amount_due|floatformat:2 }}</h4>
+                                    <small class="text-muted">Min: ₹{{ statement.minimum_amount_due|floatformat:2 }}</small>
+                                </div>
+                                <i class="fas fa-exclamation-triangle fa-2x text-warning opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card summary-card limit">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="card-title text-success">Credit Utilization</h6>
+                                    <h4 class="mb-0">{{ statement.credit_utilization|floatformat:1 }}%</h4>
+                                    <div class="utilization-bar mt-2">
+                                        <div class="utilization-fill" style="width: {{ statement.credit_utilization|floatformat:1 }}%"></div>
+                                    </div>
+                                </div>
+                                <i class="fas fa-chart-pie fa-2x text-success opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card summary-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="card-title text-primary">Due Date</h6>
+                                    <h5 class="mb-0">{{ statement.payment_due_date|default:"N/A" }}</h5>
+                                    {% if statement.payment_due_date %}
+                                        <small class="text-muted">
+                                            {% now "Y-m-d" as today %}
+                                            {% if statement.payment_due_date|date:"Y-m-d" < today %}
+                                                <span class="text-danger">Overdue</span>
+                                            {% else %}
+                                                {{ statement.payment_due_date|timeuntil }} left
+                                            {% endif %}
+                                        </small>
+                                    {% endif %}
+                                </div>
+                                <i class="fas fa-calendar-alt fa-2x text-primary opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Statement Summary -->
+            {% if analysis.summary %}
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-chart-bar me-2"></i>
+                                Statement Summary
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-md-2">
+                                    <h4 class="text-primary">{{ analysis.summary.total_transactions|default:0 }}</h4>
+                                    <small class="text-muted">Total Transactions</small>
+                                </div>
+                                <div class="col-md-2">
+                                    <h4 class="text-danger">₹{{ analysis.summary.total_purchases|floatformat:2|default:"0.00" }}</h4>
+                                    <small class="text-muted">Total Purchases</small>
+                                </div>
+                                <div class="col-md-2">
+                                    <h4 class="text-success">₹{{ analysis.summary.total_payments|floatformat:2|default:"0.00" }}</h4>
+                                    <small class="text-muted">Total Payments</small>
+                                </div>
+                                <div class="col-md-2">
+                                    <h4 class="text-warning">₹{{ analysis.summary.total_fees|floatformat:2|default:"0.00" }}</h4>
+                                    <small class="text-muted">Total Fees</small>
+                                </div>
+                                <div class="col-md-2">
+                                    <h4 class="text-info">₹{{ analysis.summary.total_interest|floatformat:2|default:"0.00" }}</h4>
+                                    <small class="text-muted">Interest Charges</small>
+                                </div>
+                                <div class="col-md-2">
+                                    <h4 class="reward-badge">{{ analysis.summary.reward_points_earned|default:0 }} pts</h4>
+                                    <small class="text-muted">Rewards Earned</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Transactions -->
+            {% if transactions %}
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="fas fa-list me-2"></i>
+                                Transaction Details
+                                <span class="badge bg-primary ms-2">{{ transactions|length }}</span>
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% for transaction in transactions %}
+                            <div class="card transaction-item {{ transaction.transaction_type|lower }}">
+                                <div class="card-body py-2">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-2">
+                                            <strong>{{ transaction.transaction_date }}</strong>
+                                            {% if transaction.posting_date != transaction.transaction_date %}
+                                                <br><small class="text-muted">Posted: {{ transaction.posting_date }}</small>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="fw-bold">{{ transaction.merchant_name|default:transaction.description|truncatechars:60 }}</div>
+                                            {% if transaction.merchant_name and transaction.description != transaction.merchant_name %}
+                                                <small class="text-muted">{{ transaction.description|truncatechars:80 }}</small>
+                                            {% endif %}
+                                            <div class="mt-1">
+                                                <span class="badge bg-secondary">{{ transaction.get_category_display }}</span>
+                                                {% if transaction.is_international %}
+                                                    <span class="badge bg-info">International</span>
+                                                {% endif %}
+                                                {% if transaction.is_recurring %}
+                                                    <span class="badge bg-warning">Recurring</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2 text-center">
+                                            <span class="badge 
+                                                {% if transaction.transaction_type == 'PURCHASE' %}bg-danger
+                                                {% elif transaction.transaction_type == 'PAYMENT' %}bg-success
+                                                {% elif transaction.transaction_type == 'CREDIT' %}bg-info
+                                                {% elif transaction.transaction_type == 'FEE' %}bg-warning
+                                                {% else %}bg-secondary{% endif %}">
+                                                <i class="fas 
+                                                    {% if transaction.transaction_type == 'PURCHASE' %}fa-shopping-cart
+                                                    {% elif transaction.transaction_type == 'PAYMENT' %}fa-credit-card
+                                                    {% elif transaction.transaction_type == 'CREDIT' %}fa-undo
+                                                    {% elif transaction.transaction_type == 'FEE' %}fa-exclamation
+                                                    {% else %}fa-exchange-alt{% endif %} me-1"></i>
+                                                {{ transaction.transaction_type }}
+                                            </span>
+                                        </div>
+                                        <div class="col-md-2 text-end">
+                                            <strong class="{% if transaction.is_debit_transaction %}text-danger{% else %}text-success{% endif %}">
+                                                {% if transaction.is_debit_transaction %}-{% else %}+{% endif %}₹{{ transaction.transaction_amount|floatformat:2 }}
+                                            </strong>
+                                            {% if transaction.reference_number %}
+                                                <br><small class="text-muted">{{ transaction.reference_number }}</small>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-2 text-center">
+                                            {% if transaction.reward_points_earned > 0 %}
+                                                <span class="reward-badge">{{ transaction.reward_points_earned }} pts</span>
+                                            {% endif %}
+                                            {% if transaction.cashback_earned > 0 %}
+                                                <br><span class="badge bg-success">₹{{ transaction.cashback_earned }} CB</span>
+                                            {% endif %}
+                                            {% if transaction.ai_confidence_score > 0 %}
+                                                <br><small class="text-muted">{{ transaction.ai_confidence_score|floatformat:1 }}% confident</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Fees and Charges -->
+            {% if fees %}
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                                Fees & Charges
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% for fee in fees %}
+                            <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                <div>
+                                    <strong>{{ fee.get_fee_type_display }}</strong>
+                                    <br><small class="text-muted">{{ fee.fee_description }}</small>
+                                    <br><small class="text-muted">{{ fee.fee_date }}</small>
+                                </div>
+                                <div class="text-end">
+                                    <strong class="text-danger">₹{{ fee.fee_amount|floatformat:2 }}</strong>
+                                    {% if fee.fee_rate %}
+                                        <br><small class="text-muted">{{ fee.fee_rate }}%</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <!-- Interest Charges -->
+                    {% if interest_charges %}
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-percent text-info me-2"></i>
+                                Interest Charges
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% for interest in interest_charges %}
+                            <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                <div>
+                                    <strong>{{ interest.get_interest_type_display }}</strong>
+                                    <br><small class="text-muted">{{ interest.interest_description }}</small>
+                                    {% if interest.annual_percentage_rate %}
+                                        <br><small class="text-muted">APR: {{ interest.annual_percentage_rate }}%</small>
+                                    {% endif %}
+                                </div>
+                                <div class="text-end">
+                                    <strong class="text-info">₹{{ interest.interest_amount|floatformat:2 }}</strong>
+                                    <br><small class="text-muted">{{ interest.interest_date }}</small>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Rewards -->
+            {% if rewards %}
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-gift text-warning me-2"></i>
+                                Rewards Earned
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                {% for reward in rewards %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="card bg-light">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <h6>{{ reward.get_reward_type_display }}</h6>
+                                                    <p class="mb-1">{{ reward.reward_description }}</p>
+                                                    <small class="text-muted">{{ reward.reward_date }}</small>
+                                                </div>
+                                                <div class="text-end">
+                                                    {% if reward.points_earned > 0 %}
+                                                        <span class="reward-badge">{{ reward.points_earned }} points</span>
+                                                    {% endif %}
+                                                    {% if reward.cashback_amount > 0 %}
+                                                        <span class="badge bg-success">₹{{ reward.cashback_amount }}</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        {% endif %}
+
+        <!-- Action Buttons -->
+        <div class="row">
+            <div class="col-12 text-center">
+                <a href="{% url 'analyzer:upload' %}" class="btn btn-primary me-2">
+                    <i class="fas fa-upload me-1"></i>
+                    Upload Another Statement
+                </a>
+                <a href="{% url 'analyzer:user_dashboard' %}" class="btn btn-success me-2">
+                    <i class="fas fa-tachometer-alt me-1"></i>
+                    My Dashboard
+                </a>
+                <a href="{% url 'tax_optimization:calculator' %}" class="btn btn-info">
+                    <i class="fas fa-calculator me-1"></i>
+                    Tax Calculator
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

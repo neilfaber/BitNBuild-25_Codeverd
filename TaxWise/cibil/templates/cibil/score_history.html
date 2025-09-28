@@ -1,0 +1,438 @@
+{% extends "authentication/base.html" %}
+{% load static %}
+
+{% block title %}CIBIL Score History - TaxWise{% endblock %}
+
+{% block extra_css %}
+<style>
+    .score-trend-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+    }
+
+    .history-card {
+        border-radius: 12px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .history-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .score-change-positive {
+        color: #28a745;
+        font-weight: bold;
+    }
+
+    .score-change-negative {
+        color: #dc3545;
+        font-weight: bold;
+    }
+
+    .score-badge {
+        font-size: 1.1rem;
+        padding: 8px 15px;
+        border-radius: 20px;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 400px;
+        margin: 20px 0;
+    }
+
+    .trend-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 8px;
+    }
+
+    .trend-up { background-color: #28a745; }
+    .trend-down { background-color: #dc3545; }
+    .trend-stable { background-color: #6c757d; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0 text-gray-800">
+                        <i class="fas fa-history text-primary me-2"></i>CIBIL Score History
+                    </h1>
+                    <p class="text-muted mb-0">Track your credit score progress over time</p>
+                </div>
+                <div>
+                    <a href="{% url 'cibil:dashboard' %}" class="btn btn-outline-primary me-2">
+                        <i class="fas fa-chart-line me-1"></i>Dashboard
+                    </a>
+                    <a href="{% url 'cibil:what_if_analysis' %}" class="btn btn-primary">
+                        <i class="fas fa-calculator me-1"></i>What-If Analysis
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if score_history %}
+    <!-- Score Trend Overview -->
+    <div class="row mb-4">
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Score Trend Chart</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="scoreChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 mb-4">
+            <div class="score-trend-card card shadow h-100">
+                <div class="card-body text-center">
+                    <h5 class="card-title mb-4">Current Score</h5>
+                    <div style="font-size: 3rem; font-weight: bold;">
+                        {{ score_history.first.calculated_score }}
+                    </div>
+                    <h6 class="mb-4">{{ score_history.first.score_range }}</h6>
+                    
+                    {% if score_history.count > 1 %}
+                        {% with latest=score_history.0 %}
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <h6 class="mb-1">Change from Previous</h6>
+                                {% if latest.change_from_previous %}
+                                    {% if latest.change_from_previous > 0 %}
+                                        <span class="score-change-positive">
+                                            <i class="fas fa-arrow-up"></i> +{{ latest.change_from_previous }}
+                                        </span>
+                                    {% elif latest.change_from_previous < 0 %}
+                                        <span class="score-change-negative">
+                                            <i class="fas fa-arrow-down"></i> {{ latest.change_from_previous }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-white">
+                                            <i class="fas fa-minus"></i> No Change
+                                        </span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-white">
+                                        <i class="fas fa-star"></i> First Record
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endwith %}
+                    {% endif %}
+                    
+                    <small class="text-white-50">
+                        Last updated: {{ score_history.first.calculation_date|date:"M d, Y" }}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Score History -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Detailed Score History</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Score</th>
+                                    <th>Range</th>
+                                    <th>Payment History</th>
+                                    <th>Utilization</th>
+                                    <th>Credit Age</th>
+                                    <th>Late Payments</th>
+                                    <th>Change</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for score in score_history %}
+                                <tr class="history-card">
+                                    <td>{{ score.calculation_date|date:"M d, Y" }}</td>
+                                    <td>
+                                        <span class="score-badge badge {% if score.calculated_score >= 750 %}bg-success{% elif score.calculated_score >= 650 %}bg-primary{% elif score.calculated_score >= 550 %}bg-warning{% else %}bg-danger{% endif %}">
+                                            {{ score.calculated_score }}
+                                        </span>
+                                    </td>
+                                    <td>{{ score.score_range }}</td>
+                                    <td>{{ score.payment_history_percentage|floatformat:1 }}%</td>
+                                    <td>{{ score.average_credit_utilization|floatformat:1 }}%</td>
+                                    <td>{{ score.credit_history_months }} mo</td>
+                                    <td>
+                                        {% if score.late_payments_count > 0 %}
+                                            <span class="text-danger fw-bold">{{ score.late_payments_count }}</span>
+                                        {% else %}
+                                            <span class="text-success">0</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if score.change_from_previous %}
+                                            {% if score.change_from_previous > 0 %}
+                                                <span class="score-change-positive">
+                                                    <i class="fas fa-arrow-up"></i> +{{ score.change_from_previous }}
+                                                </span>
+                                            {% elif score.change_from_previous < 0 %}
+                                                <span class="score-change-negative">
+                                                    <i class="fas fa-arrow-down"></i> {{ score.change_from_previous }}
+                                                </span>
+                                            {% else %}
+                                                <span class="text-muted">
+                                                    <i class="fas fa-minus"></i> 0
+                                                </span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="badge bg-info">First Record</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Component Analysis Over Time -->
+    <div class="row mb-4">
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Payment History Trend</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="paymentHistoryChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Credit Utilization Trend</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="utilizationChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Credit Health Trends -->
+    {% if credit_trends %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Monthly Credit Health Trends</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Month</th>
+                                    <th>Avg Score</th>
+                                    <th>Avg Utilization</th>
+                                    <th>Payment Rate</th>
+                                    <th>Trend</th>
+                                    <th>Key Insight</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for trend in credit_trends %}
+                                <tr>
+                                    <td>{{ trend.year }}/{{ trend.month|stringformat:"02d" }}</td>
+                                    <td>{{ trend.average_score|floatformat:0 }}</td>
+                                    <td>{{ trend.average_utilization|floatformat:1 }}%</td>
+                                    <td>{{ trend.on_time_payment_rate|floatformat:1 }}%</td>
+                                    <td>
+                                        {% if trend.score_trend == 'IMPROVING' %}
+                                            <span class="trend-indicator trend-up"></span>Improving
+                                        {% elif trend.score_trend == 'DECLINING' %}
+                                            <span class="trend-indicator trend-down"></span>Declining
+                                        {% else %}
+                                            <span class="trend-indicator trend-stable"></span>Stable
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ trend.key_insight|default:"No specific insights available" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <!-- No Score History -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-chart-line text-muted" style="font-size: 4rem;"></i>
+                    <h4 class="mt-4 mb-3">No Score History Available</h4>
+                    <p class="text-muted mb-4">Your CIBIL score history will appear here once you have calculated your score multiple times.</p>
+                    <a href="{% url 'cibil:dashboard' %}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-chart-line me-2"></i>Calculate Your Score
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    {% if score_history %}
+    // Prepare data for charts
+    const scoreHistory = [
+        {% for score in score_history reversed %}
+        {
+            date: '{{ score.calculation_date|date:"M d, Y" }}',
+            score: {{ score.calculated_score }},
+            paymentHistory: {{ score.payment_history_percentage|floatformat:2 }},
+            utilization: {{ score.average_credit_utilization|floatformat:2 }},
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    // Score Trend Chart
+    const scoreCtx = document.getElementById('scoreChart');
+    if (scoreCtx) {
+        new Chart(scoreCtx, {
+            type: 'line',
+            data: {
+                labels: scoreHistory.map(item => item.date),
+                datasets: [{
+                    label: 'CIBIL Score',
+                    data: scoreHistory.map(item => item.score),
+                    borderColor: 'rgb(33, 150, 243)',
+                    backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        min: 300,
+                        max: 900,
+                        title: {
+                            display: true,
+                            text: 'CIBIL Score'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true
+                    }
+                }
+            }
+        });
+    }
+
+    // Payment History Chart
+    const paymentCtx = document.getElementById('paymentHistoryChart');
+    if (paymentCtx) {
+        new Chart(paymentCtx, {
+            type: 'line',
+            data: {
+                labels: scoreHistory.map(item => item.date),
+                datasets: [{
+                    label: 'On-time Payment %',
+                    data: scoreHistory.map(item => item.paymentHistory),
+                    borderColor: 'rgb(40, 167, 69)',
+                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: 'Payment Rate %'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Utilization Chart
+    const utilizationCtx = document.getElementById('utilizationChart');
+    if (utilizationCtx) {
+        new Chart(utilizationCtx, {
+            type: 'line',
+            data: {
+                labels: scoreHistory.map(item => item.date),
+                datasets: [{
+                    label: 'Credit Utilization %',
+                    data: scoreHistory.map(item => item.utilization),
+                    borderColor: 'rgb(255, 193, 7)',
+                    backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: 'Utilization %'
+                        }
+                    }
+                }
+            }
+        });
+    }
+    {% endif %}
+});
+</script>
+{% endblock %}
