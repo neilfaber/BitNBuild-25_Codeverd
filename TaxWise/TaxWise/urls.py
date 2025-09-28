@@ -26,9 +26,12 @@ urlpatterns = [
     path('auth/', include('social_django.urls', namespace='social')),
     path('auth/', include('authentication.urls', namespace='authentication')),
     path('tax-ai/', include('tax_optimization.urls')),  # Protected tax AI routes
+    path('cibil/', include('cibil.urls')),  # CIBIL score analysis routes
     path('', include('bank_analyzer.urls')),
     path('voice-assistant/', include('ai_voice_assistant.urls')),
 ]
 
+# Serve media files in development
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0] if settings.STATICFILES_DIRS else '')

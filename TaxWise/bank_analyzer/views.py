@@ -10,7 +10,11 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import transaction
-from .models import UploadedPDF, BankTransaction, TransactionSummary
+from .models import (
+    UploadedPDF, BankTransaction, TransactionSummary,
+    CreditCardStatement, CreditCardTransaction, CreditCardFee, 
+    CreditCardInterest, CreditCardReward
+)
 
 # ============================================================
 # CONFIGURE GEMINI API
@@ -29,8 +33,19 @@ def analyze_pdf_with_gemini(pdf_path):
         # Initialize Gemini model
         model = genai.GenerativeModel("gemini-2.0-flash")
 
-        # Upload the file to Gemini
-        uploaded_file = genai.upload_file(pdf_path)
+        # Read the PDF file content directly (newer Gemini API approach)
+        with open(pdf_path, 'rb') as pdf_file:
+            pdf_content = pdf_file.read()
+        
+        # Create the file upload object for Gemini API
+        import mimetypes
+        mime_type = mimetypes.guess_type(pdf_path)[0] or 'application/pdf'
+        
+        # Create file data object for newer Gemini API
+        file_data = {
+            "mime_type": mime_type,
+            "data": pdf_content
+        }
 
         # Enhanced prompt to include debit/credit classification
         prompt = """
@@ -85,7 +100,7 @@ def analyze_pdf_with_gemini(pdf_path):
         """
 
         # Generate the response (send file + text prompt)
-        response = model.generate_content([uploaded_file, prompt])
+        response = model.generate_content([file_data, prompt])
 
         # Extract the text result
         result_text = response.text
@@ -101,6 +116,126 @@ def analyze_pdf_with_gemini(pdf_path):
 
     except Exception as e:
         return {"error": f"Error while processing file: {str(e)}"}
+
+
+def analyze_credit_card_statement_with_gemini(pdf_path):
+    """
+    Specialized function to analyze credit card statements with comprehensive data extraction.
+    Extracts account summary, transaction details, fees, interest, and reward information.
+    """
+    try:
+        # Initialize Gemini model
+        model = genai.GenerativeModel("gemini-2.0-flash")
+
+        # Read the PDF file content directly (newer Gemini API approach)
+        with open(pdf_path, 'rb') as pdf_file:
+            pdf_content = pdf_file.read()
+        
+        # Create the file upload object for Gemini API
+        import mimetypes
+        mime_type = mimetypes.guess_type(pdf_path)[0] or 'application/pdf'
+        
+        # Create file data object for newer Gemini API
+        file_data = {
+            "mime_type": mime_type,
+            "data": pdf_content
+        }
+
+        # Simplified prompt for credit card statement analysis focused on CIBIL data
+        prompt = """
+        You are an AI financial assistant. Analyze the uploaded credit card statement PDF.
+        Extract key information needed for CIBIL score analysis and transaction categorization.
+        
+        Return a well-formatted JSON object strictly following this schema:
+        {
+          "statement_type": "credit_card",
+          "account_summary": {
+            "bank_name": "Bank name from statement",
+            "card_number_last_four": "Last 4 digits of card",
+            "statement_date": "YYYY-MM-DD",
+            "payment_due_date": "YYYY-MM-DD", 
+            "previous_balance": 5000.00,
+            "current_balance": 7500.00,
+            "minimum_amount_due": 750.00,
+            "total_credit_limit": 50000.00,
+            "credit_utilization_percentage": 15.0
+          },
+          "transactions": [
+            {
+              "date": "YYYY-MM-DD",
+              "description": "Transaction description",
+              "amount": 123.45,
+              "type": "PURCHASE/PAYMENT/CREDIT/FEE",
+              "category": "category_name",
+              "confidence": 0.95
+            }
+          ],
+          "payment_behavior": {
+            "on_time_payment": true,
+            "minimum_payment_made": true,
+            "overlimit_usage": false,
+            "late_fees": 0.00,
+            "total_fees": 0.00,
+            "total_interest": 0.00
+          },
+          "summary": {
+            "total_transactions": 25,
+            "total_purchases": 15000.00,
+            "total_payments": 10000.00,
+            "total_fees": 500.00,
+            "net_change": 5500.00,
+            "period": "Month Year"
+          }
+        }
+        
+        Categories should be one of:
+        - DINING (restaurants, food delivery)
+        - SHOPPING (retail, online shopping)
+        - GROCERY (supermarkets, grocery)
+        - FUEL (petrol pumps, gas stations)
+        - TRANSPORT (cab, airlines, metro)
+        - ENTERTAINMENT (movies, streaming)
+        - HEALTHCARE (medical, pharmacy)
+        - UTILITIES (electricity, phone bills)
+        - EDUCATION (fees, books)
+        - INSURANCE (insurance premiums)
+        - EMI (loan payments, EMIs)
+        - ATM (cash withdrawals)
+        - MISCELLANEOUS (others)
+        
+        Transaction Types:
+        - PURCHASE: Spending transactions
+        - PAYMENT: Credit card bill payments
+        - CREDIT: Refunds, cashbacks
+        - FEE: Late fees, annual fees
+        
+        Focus on extracting data that impacts CIBIL score:
+        - Payment behavior (on-time, late, missed)
+        - Credit utilization percentage
+        - Outstanding balances
+        - Fees and penalties
+        - Overlimit usage
+        
+        Return ONLY valid JSON without markdown formatting.
+        """
+
+        # Generate the response
+        response = model.generate_content([file_data, prompt])
+
+        # Extract the text result
+        result_text = response.text
+
+        # Attempt to extract valid JSON
+        json_match = re.search(r'\{[\s\S]*\}', result_text)
+        if json_match:
+            data = json.loads(json_match.group())
+        else:
+            data = {"error": "Gemini response did not contain valid JSON.", "raw_output": result_text}
+
+        return data
+
+    except Exception as e:
+        return {"error": f"Error while processing credit card statement: {str(e)}"}
 
 
 def save_transactions_to_db(analysis_result, uploaded_pdf, user):
@@ -240,6 +375,195 @@ def create_transaction_summary(transactions, uploaded_pdf, user):
     return summaries
 
 
+def save_credit_card_statement_to_db(analysis_result, uploaded_pdf, user):
+    """
+    Save credit card statement data to database with all components
+    """
+    if not analysis_result or 'account_summary' not in analysis_result:
+        return None
+    
+    try:
+        with transaction.atomic():
+            # Extract account summary
+            account_data = analysis_result.get('account_summary', {})
+            
+            # Parse statement date
+            statement_date = None
+            if account_data.get('statement_date'):
+                try:
+                    statement_date = datetime.strptime(account_data['statement_date'], '%Y-%m-%d').date()
+                except:
+                    pass
+            
+            # Parse billing period dates
+            billing_start = None
+            billing_end = None
+            due_date = None
+            
+            if account_data.get('billing_period_start'):
+                try:
+                    billing_start = datetime.strptime(account_data['billing_period_start'], '%Y-%m-%d').date()
+                except:
+                    pass
+            
+            if account_data.get('billing_period_end'):
+                try:
+                    billing_end = datetime.strptime(account_data['billing_period_end'], '%Y-%m-%d').date()
+                except:
+                    pass
+                    
+            if account_data.get('payment_due_date'):
+                try:
+                    due_date = datetime.strptime(account_data['payment_due_date'], '%Y-%m-%d').date()
+                except:
+                    pass
+            
+            # Create credit card statement
+            statement = CreditCardStatement.objects.create(
+                user=user,
+                uploaded_pdf=uploaded_pdf,
+                card_number_last_four=account_data.get('card_number_last_four', '')[:4],
+                cardholder_name=account_data.get('cardholder_name', ''),
+                bank_name=account_data.get('bank_name', ''),
+                card_type=account_data.get('card_type', ''),
+                statement_date=statement_date,
+                billing_period_start=billing_start,
+                billing_period_end=billing_end,
+                payment_due_date=due_date,
+                previous_balance=Decimal(str(account_data.get('previous_balance', 0))),
+                current_balance=Decimal(str(account_data.get('current_balance', 0))),
+                statement_balance=Decimal(str(account_data.get('statement_balance', 0))),
+                minimum_amount_due=Decimal(str(account_data.get('minimum_amount_due', 0))),
+                total_amount_due=Decimal(str(account_data.get('total_amount_due', 0))),
+                total_credit_limit=Decimal(str(account_data.get('total_credit_limit', 0))),
+                available_credit=Decimal(str(account_data.get('available_credit', 0))),
+                credit_utilization_percentage=float(account_data.get('credit_utilization_percentage', 0)),
+                raw_analysis_result=analysis_result
+            )
+            
+            # Save transactions
+            saved_transactions = []
+            for trans_data in analysis_result.get('transactions', []):
+                try:
+                    # Parse transaction date
+                    trans_date = datetime.strptime(trans_data.get('transaction_date'), '%Y-%m-%d').date()
+                    
+                    # Parse posting date if available
+                    posting_date = None
+                    if trans_data.get('posting_date'):
+                        try:
+                            posting_date = datetime.strptime(trans_data.get('posting_date'), '%Y-%m-%d').date()
+                        except:
+                            posting_date = trans_date
+                    else:
+                        posting_date = trans_date
+                    
+                    # Create transaction
+                    credit_transaction = CreditCardTransaction.objects.create(
+                        statement=statement,
+                        user=user,
+                        transaction_date=trans_date,
+                        posting_date=posting_date,
+                        description=trans_data.get('description', ''),
+                        merchant_name=trans_data.get('merchant_name', ''),
+                        transaction_amount=Decimal(str(trans_data.get('transaction_amount', 0))),
+                        transaction_type=trans_data.get('transaction_type', 'PURCHASE').upper(),
+                        category=trans_data.get('category', 'MISCELLANEOUS').upper(),
+                        ai_confidence_score=float(trans_data.get('confidence', 0.0)),
+                        reference_number=trans_data.get('reference_number', ''),
+                        is_international=trans_data.get('is_international', False),
+                        reward_points_earned=int(trans_data.get('reward_points_earned', 0)),
+                        cashback_earned=Decimal(str(trans_data.get('cashback_earned', 0)))
+                    )
+                    saved_transactions.append(credit_transaction)
+                    
+                except Exception as e:
+                    print(f"Error saving credit card transaction: {e}")
+                    continue
+            
+            # Save fees and charges
+            for fee_data in analysis_result.get('fees_and_charges', []):
+                try:
+                    fee_date = datetime.strptime(fee_data.get('fee_date'), '%Y-%m-%d').date()
+                    
+                    CreditCardFee.objects.create(
+                        statement=statement,
+                        user=user,
+                        fee_type=fee_data.get('fee_type', 'OTHER').upper(),
+                        fee_description=fee_data.get('fee_description', ''),
+                        fee_amount=Decimal(str(fee_data.get('fee_amount', 0))),
+                        fee_date=fee_date,
+                        base_amount=Decimal(str(fee_data.get('base_amount', 0))) if fee_data.get('base_amount') else None,
+                        fee_rate=float(fee_data.get('fee_rate', 0)) if fee_data.get('fee_rate') else None
+                    )
+                except Exception as e:
+                    print(f"Error saving credit card fee: {e}")
+                    continue
+            
+            # Save interest charges
+            for interest_data in analysis_result.get('interest_charges', []):
+                try:
+                    interest_date = datetime.strptime(interest_data.get('interest_date'), '%Y-%m-%d').date()
+                    
+                    CreditCardInterest.objects.create(
+                        statement=statement,
+                        user=user,
+                        interest_type=interest_data.get('interest_type', 'PURCHASE').upper(),
+                        interest_description=interest_data.get('interest_description', ''),
+                        interest_amount=Decimal(str(interest_data.get('interest_amount', 0))),
+                        interest_date=interest_date,
+                        principal_amount=Decimal(str(interest_data.get('principal_amount', 0))) if interest_data.get('principal_amount') else None,
+                        annual_percentage_rate=float(interest_data.get('annual_percentage_rate', 0)) if interest_data.get('annual_percentage_rate') else None,
+                        number_of_days=int(interest_data.get('number_of_days', 0)) if interest_data.get('number_of_days') else None
+                    )
+                except Exception as e:
+                    print(f"Error saving credit card interest: {e}")
+                    continue
+            
+            # Save rewards
+            for reward_data in analysis_result.get('rewards', []):
+                try:
+                    reward_date = datetime.strptime(reward_data.get('reward_date'), '%Y-%m-%d').date()
+                    expiry_date = None
+                    if reward_data.get('expiry_date'):
+                        try:
+                            expiry_date = datetime.strptime(reward_data.get('expiry_date'), '%Y-%m-%d').date()
+                        except:
+                            pass
+                    
+                    CreditCardReward.objects.create(
+                        statement=statement,
+                        user=user,
+                        reward_type=reward_data.get('reward_type', 'POINTS').upper(),
+                        reward_description=reward_data.get('reward_description', ''),
+                        reward_date=reward_date,
+                        points_earned=int(reward_data.get('points_earned', 0)),
+                        cashback_amount=Decimal(str(reward_data.get('cashback_amount', 0))),
+                        reward_rate=float(reward_data.get('reward_rate', 0)),
+                        expiry_date=expiry_date
+                    )
+                except Exception as e:
+                    print(f"Error saving credit card reward: {e}")
+                    continue
+            
+            # Update statement totals from summary
+            summary_data = analysis_result.get('summary', {})
+            statement.total_purchases = Decimal(str(summary_data.get('total_purchases', 0)))
+            statement.total_payments = Decimal(str(summary_data.get('total_payments', 0)))
+            statement.total_fees = Decimal(str(summary_data.get('total_fees', 0)))
+            statement.total_interest = Decimal(str(summary_data.get('total_interest', 0)))
+            statement.total_credits = Decimal(str(summary_data.get('total_credits', 0)))
+            statement.reward_points_earned = int(summary_data.get('reward_points_earned', 0))
+            statement.cashback_earned = Decimal(str(summary_data.get('cashback_earned', 0)))
+            statement.save()
+            
+            return statement, saved_transactions
+            
+    except Exception as e:
+        print(f"Error saving credit card statement: {e}")
+        return None, []
+
+
 # ============================================================
 # MAIN UPLOAD VIEW
 # ============================================================
@@ -247,11 +571,12 @@ def create_transaction_summary(transactions, uploaded_pdf, user):
 def upload_view(request):
     """
     Handles PDF upload and sends it for Gemini analysis.
+    Automatically detects whether it's a bank statement or credit card statement.
     Displays results in a dashboard after processing.
-    Now includes debit/credit classification and saves individual transactions.
     """
     if request.method == "POST" and request.FILES.get("pdf"):
         pdf = request.FILES["pdf"]
+        statement_type = request.POST.get('statement_type', 'auto')  # auto, bank, credit_card
 
         # Save uploaded file in temporary storage
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
@@ -265,35 +590,110 @@ def upload_view(request):
             user=request.user
         )
 
-        # Analyze using Gemini
-        analysis_result = analyze_pdf_with_gemini(tmp_path)
+        try:
+            # Determine analysis type
+            if statement_type == 'credit_card':
+                # Force credit card analysis
+                analysis_result = analyze_credit_card_statement_with_gemini(tmp_path)
+                is_credit_card = True
+            elif statement_type == 'bank':
+                # Force bank statement analysis
+                analysis_result = analyze_pdf_with_gemini(tmp_path)
+                is_credit_card = False
+            else:
+                # Auto-detect: Try credit card first, then bank statement
+                analysis_result = analyze_credit_card_statement_with_gemini(tmp_path)
+                
+                # Check if it's actually a credit card statement
+                if (analysis_result.get('statement_type') == 'credit_card' and 
+                    analysis_result.get('account_summary') and
+                    not analysis_result.get('error')):
+                    is_credit_card = True
+                else:
+                    # Fall back to bank statement analysis
+                    analysis_result = analyze_pdf_with_gemini(tmp_path)
+                    is_credit_card = False
 
-        # Clean up temp file
-        os.remove(tmp_path)
+            # Clean up temp file
+            os.remove(tmp_path)
 
-        # Store analysis in DB
-        uploaded.analysis_result = analysis_result
-        uploaded.save()
+            # Store analysis in DB
+            uploaded.analysis_result = analysis_result
+            uploaded.save()
+            
+            # Process and save data based on statement type
+            if not analysis_result.get('error'):
+                if is_credit_card and analysis_result.get('account_summary'):
+                    # Save credit card statement data
+                    statement, saved_transactions = save_credit_card_statement_to_db(
+                        analysis_result, uploaded, request.user
+                    )
+                    
+                    if statement:
+                        messages.success(request, 
+                            f"Successfully processed credit card statement with {len(saved_transactions)} transactions!")
+                        
+                        # Render credit card dashboard
+                        return render(request, "bank_analyzer/credit_card_dashboard.html", {
+                            "analysis": analysis_result,
+                            "file": uploaded,
+                            "statement": statement,
+                            "transactions": saved_transactions[:50],
+                            "fees": statement.fees.all(),
+                            "interest_charges": statement.interest_charges.all(),
+                            "rewards": statement.rewards.all(),
+                            "is_credit_card": True
+                        })
+                    else:
+                        messages.error(request, "Error processing credit card statement data")
+                else:
+                    # Save as bank statement data
+                    saved_transactions = save_transactions_to_db(analysis_result, uploaded, request.user)
+                    messages.success(request, f"Successfully processed {len(saved_transactions)} bank transactions!")
+                    
+                    # Render bank statement dashboard
+                    return render(request, "bank_analyzer/dashboard.html", {
+                        "analysis": analysis_result,
+                        "file": uploaded,
+                        "transactions": BankTransaction.objects.filter(uploaded_pdf=uploaded)[:50],
+                        "user_summaries": TransactionSummary.objects.filter(user=request.user, uploaded_pdf=uploaded),
+                        "is_credit_card": False
+                    })
+            else:
+                messages.error(request, f"Error processing file: {analysis_result.get('error', 'Unknown error')}")
+                
+                # Return basic dashboard with error
+                return render(request, "bank_analyzer/dashboard.html", {
+                    "analysis": analysis_result,
+                    "file": uploaded,
+                    "transactions": [],
+                    "user_summaries": [],
+                    "is_credit_card": False
+                })
         
-        # Save individual transactions to database
-        if not analysis_result.get('error'):
-            saved_transactions = save_transactions_to_db(analysis_result, uploaded, request.user)
-            messages.success(request, f"Successfully processed {len(saved_transactions)} transactions!")
-        else:
-            messages.error(request, f"Error processing file: {analysis_result.get('error', 'Unknown error')}")
-
-        return render(request, "bank_analyzer/dashboard.html", {
-            "analysis": analysis_result,
-            "file": uploaded,
-            "transactions": BankTransaction.objects.filter(uploaded_pdf=uploaded)[:50],  # Limit for display
-            "user_summaries": TransactionSummary.objects.filter(user=request.user, uploaded_pdf=uploaded)
-        })
+        except Exception as e:
+            # Clean up temp file if it still exists
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+            
+            messages.error(request, f"Error processing file: {str(e)}")
+            
+            # Return error dashboard
+            return render(request, "bank_analyzer/dashboard.html", {
+                "analysis": {"error": str(e)},
+                "file": uploaded,
+                "transactions": [],
+                "user_summaries": [],
+                "is_credit_card": False
+            })
 
     # Show user's recent uploads
     recent_uploads = UploadedPDF.objects.filter(user=request.user).order_by('-uploaded_at')[:5] if request.user.is_authenticated else []
+    recent_credit_cards = CreditCardStatement.objects.filter(user=request.user).order_by('-statement_date')[:5] if request.user.is_authenticated else []
     
     return render(request, "bank_analyzer/upload.html", {
-        "recent_uploads": recent_uploads
+        "recent_uploads": recent_uploads,
+        "recent_credit_cards": recent_credit_cards
     })
 
 
