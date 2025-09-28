@@ -777,3 +777,329 @@ def user_dashboard(request):
     }
     
     return render(request, "bank_analyzer/user_dashboard.html", context)
+
+
+# Add these functions to your existing views.py file
+
+def generate_financial_predictions_with_gemini(user_data):
+    """
+    Use Gemini to analyze user's financial data and generate predictions
+    """
+    try:
+        # Initialize Gemini model
+        model = genai.GenerativeModel("gemini-2.0-flash")
+        
+        # Create comprehensive financial profile for analysis
+        financial_prompt = f"""
+        You are an expert financial advisor and tax consultant. Analyze the following user's financial data 
+        and provide comprehensive predictions for future troubles and benefits regarding taxes and finances.
+        
+        USER FINANCIAL DATA:
+        
+        TRANSACTION SUMMARY:
+        - Total Credits (Income): ₹{user_data.get('total_credits', 0):,.2f}
+        - Total Debits (Expenses): ₹{user_data.get('total_debits', 0):,.2f}
+        - Net Amount: ₹{user_data.get('net_amount', 0):,.2f}
+        - Total Transactions: {user_data.get('total_transactions', 0)}
+        
+        CATEGORY BREAKDOWN:
+        {user_data.get('category_breakdown_text', '')}
+        
+        MONTHLY PATTERNS:
+        {user_data.get('monthly_patterns_text', '')}
+        
+        CREDIT CARD DATA (if available):
+        - Credit Utilization: {user_data.get('credit_utilization', 0)}%
+        - Payment Behavior: {user_data.get('payment_behavior', 'Unknown')}
+        - Total Credit Limit: ₹{user_data.get('total_credit_limit', 0):,.2f}
+        - Outstanding Balance: ₹{user_data.get('outstanding_balance', 0):,.2f}
+        
+        INVESTMENT PATTERNS:
+        - SIP Amount: ₹{user_data.get('sip_amount', 0):,.2f}
+        - Investment Frequency: {user_data.get('investment_frequency', 'Unknown')}
+        
+        Based on this data, provide a detailed JSON response with the following structure:
+        
+        {{
+            "overall_financial_health": {{
+                "score": 85,
+                "status": "Good/Average/Poor",
+                "key_strengths": ["Regular SIP investments", "Controlled spending"],
+                "major_concerns": ["High credit utilization", "Irregular income"]
+            }},
+            "tax_predictions": {{
+                "current_year_liability": {{
+                    "estimated_tax": 125000,
+                    "confidence_level": "High/Medium/Low",
+                    "basis": "Based on salary credits and investment patterns"
+                }},
+                "next_year_projections": {{
+                    "expected_tax_increase": 15000,
+                    "potential_savings": 35000,
+                    "recommended_investments": ["ELSS", "PPF", "NPS"]
+                }},
+                "tax_optimization_opportunities": [
+                    {{
+                        "strategy": "Increase ELSS investment",
+                        "potential_savings": 46800,
+                        "implementation": "Invest ₹1.5L in ELSS funds",
+                        "timeline": "Before March 31st"
+                    }}
+                ],
+                "compliance_alerts": [
+                    {{
+                        "issue": "ITR filing deadline",
+                        "severity": "High/Medium/Low",
+                        "action_required": "File ITR by July 31st",
+                        "estimated_penalty": 5000
+                    }}
+                ]
+            }},
+            "financial_predictions": {{
+                "short_term_forecast": {{
+                    "next_3_months": {{
+                        "expected_income": 450000,
+                        "expected_expenses": 380000,
+                        "surplus_deficit": 70000,
+                        "key_challenges": ["High utility bills in summer"],
+                        "opportunities": ["Bonus expected in Q1"]
+                    }},
+                    "next_6_months": {{
+                        "cash_flow_projection": 140000,
+                        "major_expenses": ["Insurance renewal", "Festival expenses"],
+                        "recommended_actions": ["Build emergency fund", "Review insurance"]
+                    }}
+                }},
+                "long_term_forecast": {{
+                    "next_year": {{
+                        "wealth_growth_projection": 8.5,
+                        "risk_factors": ["Market volatility", "Inflation impact"],
+                        "growth_opportunities": ["Real estate investment", "Equity markets"]
+                    }},
+                    "5_year_outlook": {{
+                        "projected_net_worth": 2500000,
+                        "retirement_readiness": 65,
+                        "major_goals_feasibility": ["Home purchase - Feasible", "Child education - Need planning"]
+                    }}
+                }}
+            }},
+            "risk_assessment": {{
+                "immediate_risks": [
+                    {{
+                        "risk": "High credit card debt",
+                        "impact": "High/Medium/Low",
+                        "probability": "High/Medium/Low",
+                        "mitigation": "Pay off high-interest debt first",
+                        "estimated_cost": 45000
+                    }}
+                ],
+                "future_challenges": [
+                    {{
+                        "challenge": "Inflation impact on expenses",
+                        "timeline": "Next 2 years",
+                        "impact_amount": 85000,
+                        "preparation_needed": "Increase income by 8% annually"
+                    }}
+                ]
+            }},
+            "recommendations": {{
+                "immediate_actions": [
+                    {{
+                        "priority": "High/Medium/Low",
+                        "action": "Reduce credit card utilization below 30%",
+                        "expected_benefit": "Improve CIBIL score by 50 points",
+                        "timeline": "Within 3 months",
+                        "estimated_savings": 25000
+                    }}
+                ],
+                "strategic_planning": [
+                    {{
+                        "goal": "Tax optimization",
+                        "strategy": "Systematic investment plan",
+                        "investment_amount": 150000,
+                        "expected_returns": 12.5,
+                        "tax_savings": 46800
+                    }}
+                ],
+                "emergency_preparations": [
+                    {{
+                        "scenario": "Job loss",
+                        "required_fund": 600000,
+                        "current_preparedness": 35,
+                        "recommended_action": "Build 6-month emergency fund"
+                    }}
+                ]
+            }},
+            "monthly_action_plan": [
+                {{
+                    "month": 1,
+                    "focus_area": "Debt reduction",
+                    "specific_actions": ["Pay extra ₹10K toward credit card", "Cancel unused subscriptions"],
+                    "budget_allocation": {{
+                        "debt_payment": 25000,
+                        "investments": 15000,
+                        "emergency_fund": 5000
+                    }}
+                }}
+            ]
+        }}
+        
+        Make sure all predictions are realistic, data-driven, and actionable. Consider Indian tax laws, 
+        current economic conditions, and practical financial planning strategies. All amounts should be in INR.
+        """
+        
+        # Generate the response
+        response = model.generate_content(financial_prompt)
+        result_text = response.text
+        
+        # Extract JSON from response
+        json_match = re.search(r'\{[\s\S]*\}', result_text)
+        if json_match:
+            predictions_data = json.loads(json_match.group())
+        else:
+            predictions_data = {"error": "Could not parse predictions", "raw_output": result_text}
+        
+        return predictions_data
+        
+    except Exception as e:
+        return {"error": f"Error generating predictions: {str(e)}"}
+
+
+def prepare_user_financial_data(user):
+    """
+    Prepare comprehensive financial data for prediction analysis
+    """
+    # Get all user transactions
+    all_transactions = BankTransaction.objects.filter(user=user)
+    credit_card_statements = CreditCardStatement.objects.filter(user=user)
+    
+    # Calculate basic stats
+    total_credits = sum(t.amount for t in all_transactions if t.is_credit)
+    total_debits = sum(t.amount for t in all_transactions if t.is_debit)
+    
+    # Category breakdown
+    category_breakdown = {}
+    for transaction in all_transactions:
+        category = transaction.category
+        if category not in category_breakdown:
+            category_breakdown[category] = {'amount': 0, 'count': 0, 'credits': 0, 'debits': 0}
+        
+        category_breakdown[category]['amount'] += float(transaction.amount)
+        category_breakdown[category]['count'] += 1
+        
+        if transaction.is_credit:
+            category_breakdown[category]['credits'] += float(transaction.amount)
+        else:
+            category_breakdown[category]['debits'] += float(transaction.amount)
+    
+    # Monthly patterns
+    monthly_summaries = TransactionSummary.objects.filter(user=user).order_by('-year', '-month')[:12]
+    
+    # Credit card analysis
+    latest_cc_statement = credit_card_statements.first() if credit_card_statements.exists() else None
+    
+    # Create text representations for Gemini
+    category_breakdown_text = "\n".join([
+        f"- {category}: ₹{data['amount']:,.2f} ({data['count']} transactions)"
+        for category, data in category_breakdown.items()
+    ])
+    
+    monthly_patterns_text = "\n".join([
+        f"- {summary.month}/{summary.year}: Credits ₹{summary.total_credits:,.2f}, "
+        f"Debits ₹{summary.total_debits:,.2f}, Net ₹{summary.net_amount:,.2f}"
+        for summary in monthly_summaries
+    ])
+    
+    # SIP and investment analysis
+    sip_transactions = all_transactions.filter(category='SIP')
+    sip_amount = sum(t.amount for t in sip_transactions)
+    sip_frequency = len(sip_transactions)
+    
+    return {
+        'total_credits': float(total_credits),
+        'total_debits': float(total_debits),
+        'net_amount': float(total_credits - total_debits),
+        'total_transactions': all_transactions.count(),
+        'category_breakdown_text': category_breakdown_text,
+        'monthly_patterns_text': monthly_patterns_text,
+        'credit_utilization': float(latest_cc_statement.credit_utilization_percentage) if latest_cc_statement else 0,
+        'payment_behavior': 'Good' if latest_cc_statement and latest_cc_statement.minimum_amount_due > 0 else 'Unknown',
+        'total_credit_limit': float(latest_cc_statement.total_credit_limit) if latest_cc_statement else 0,
+        'outstanding_balance': float(latest_cc_statement.current_balance) if latest_cc_statement else 0,
+        'sip_amount': float(sip_amount),
+        'investment_frequency': f"{sip_frequency} transactions" if sip_frequency > 0 else 'No regular investments',
+        'category_breakdown': category_breakdown,
+        'monthly_summaries': [
+            {
+                'month': s.month,
+                'year': s.year,
+                'credits': float(s.total_credits),
+                'debits': float(s.total_debits),
+                'net': float(s.net_amount)
+            }
+            for s in monthly_summaries
+        ]
+    }
+
+
+@login_required
+def financial_predictions_view(request):
+    """
+    Generate and display financial predictions for the user
+    """
+    # Get user's financial data
+    user_data = prepare_user_financial_data(request.user)
+    
+    # Check if user has sufficient data for predictions
+    if user_data['total_transactions'] < 10:
+        messages.warning(request, "Upload more bank statements to get accurate financial predictions.")
+        return render(request, 'bank_analyzer/financial_predictions.html', {
+            'insufficient_data': True,
+            'transaction_count': user_data['total_transactions']
+        })
+    
+    # Generate predictions using Gemini
+    predictions = generate_financial_predictions_with_gemini(user_data)
+    
+    if predictions.get('error'):
+        messages.error(request, f"Error generating predictions: {predictions['error']}")
+        predictions = None
+    
+    # Prepare context for template
+    context = {
+        'user_data': user_data,
+        'predictions': predictions,
+        'sufficient_data': True,
+        'generated_at': datetime.now(),
+    }
+    
+    return render(request, 'bank_analyzer/financial_predictions.html', context)
+
+
+@login_required
+def prediction_details_view(request, prediction_type):
+    """
+    Show detailed view for specific prediction category
+    """
+    user_data = prepare_user_financial_data(request.user)
+    predictions = generate_financial_predictions_with_gemini(user_data)
+    
+    # Extract specific prediction data based on type
+    detail_data = {}
+    if prediction_type == 'tax':
+        detail_data = predictions.get('tax_predictions', {})
+    elif prediction_type == 'financial':
+        detail_data = predictions.get('financial_predictions', {})
+    elif prediction_type == 'risk':
+        detail_data = predictions.get('risk_assessment', {})
+    elif prediction_type == 'recommendations':
+        detail_data = predictions.get('recommendations', {})
+    
+    context = {
+        'prediction_type': prediction_type,
+        'detail_data': detail_data,
+        'user_data': user_data,
+        'full_predictions': predictions
+    }
+    
+    return render(request, 'bank_analyzer/prediction_details.html', context)
