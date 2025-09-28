@@ -47,6 +47,7 @@ except ImportError as e:
 
 from .tax_calculator.engine import tax_calculator
 from .utils.cibil_utils import CIBILScoreCalculator, CIBILRecommendationEngine, CIBILWhatIfAnalyzer, analyze_credit_from_financial_data
+from .automatic_tax_calculator import AutomaticTaxCalculator
 
 # Template Views for Frontend Pages
 def home(request):
@@ -819,5 +820,254 @@ def analyze_financial_data_for_cibil(request):
         'status': 'error',
         'message': 'Method not allowed'
     }, status=405)
+
+
+# ====================================
+# AUTOMATIC TAX CALCULATION VIEWS
+# ====================================
+
+@login_required
+def automatic_tax_dashboard(request):
+    """
+    Main dashboard for automatic tax calculations
+    """
+    try:
+        calculator = AutomaticTaxCalculator(request.user)
+        tax_analysis = calculator.calculate_comprehensive_tax_savings()
+        
+        return render(request, 'tax_optimization/automatic_tax_dashboard.html', {
+            'tax_analysis': tax_analysis,
+            'user': request.user
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in automatic tax dashboard: {e}")
+        return render(request, 'tax_optimization/automatic_tax_dashboard.html', {
+            'error': 'Unable to calculate tax analysis at the moment.'
+        })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_automatic_tax_calculations(request):
+    """
+    API endpoint to get automatic tax calculations
+    """
+    try:
+        financial_year = request.GET.get('financial_year', None)
+        calculator = AutomaticTaxCalculator(request.user, financial_year)
+        tax_analysis = calculator.calculate_comprehensive_tax_savings()
+        
+        # Convert Decimal objects to float for JSON serialization
+        def decimal_to_float(obj):
+            if isinstance(obj, dict):
+                return {k: decimal_to_float(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [decimal_to_float(item) for item in obj]
+            elif isinstance(obj, Decimal):
+                return float(obj)
+            elif hasattr(obj, 'isoformat'):  # datetime objects
+                return obj.isoformat()
+            else:
+                return obj
+        
+        serializable_analysis = decimal_to_float(tax_analysis)
+        
+        return Response({
+            'status': 'success',
+            'data': serializable_analysis
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in automatic tax calculation API: {e}")
+        return Response({
+            'status': 'error',
+            'message': 'Unable to calculate tax analysis'
+        }, status=500)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_section_wise_analysis(request, section):
+    """
+    Get detailed analysis for a specific tax section
+    """
+    try:
+        calculator = AutomaticTaxCalculator(request.user)
+        
+        section_methods = {
+            '80C': calculator.calculate_section_80c_deductions,
+            '80D': calculator.calculate_section_80d_deductions,
+            '80G': calculator.calculate_section_80g_deductions,
+            '24B': calculator.calculate_section_24b_deductions
+        }
+        
+        if section not in section_methods:
+            return Response({
+                'status': 'error',
+                'message': f'Invalid section: {section}'
+            }, status=400)
+        
+        analysis = section_methods[section]()
+        
+        # Convert Decimal objects to float for JSON serialization
+        def decimal_to_float(obj):
+            if isinstance(obj, dict):
+                return {k: decimal_to_float(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [decimal_to_float(item) for item in obj]
+            elif isinstance(obj, Decimal):
+                return float(obj)
+            elif hasattr(obj, 'isoformat'):
+                return obj.isoformat()
+            else:
+                return obj
+        
+        serializable_analysis = decimal_to_float(analysis)
+        
+        return Response({
+            'status': 'success',
+            'data': serializable_analysis
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in section-wise analysis for {section}: {e}")
+        return Response({
+            'status': 'error',
+            'message': f'Unable to analyze section {section}'
+        }, status=500)
+
+
+@login_required
+def section_detail_view(request, section):
+    """
+    Detailed view for a specific tax section
+    """
+    try:
+        calculator = AutomaticTaxCalculator(request.user)
+        
+        section_methods = {
+            '80C': calculator.calculate_section_80c_deductions,
+            '80D': calculator.calculate_section_80d_deductions,
+            '80G': calculator.calculate_section_80g_deductions,
+            '24B': calculator.calculate_section_24b_deductions
+        }
+        
+        if section not in section_methods:
+            return redirect('automatic_tax_dashboard')
+        
+        analysis = section_methods[section]()
+        
+        return render(request, 'tax_optimization/section_detail.html', {
+            'section': section,
+            'analysis': analysis,
+            'user': request.user
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in section detail view for {section}: {e}")
+        return render(request, 'tax_optimization/section_detail.html', {
+            'section': section,
+            'error': f'Unable to analyze section {section}'
+        })
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def save_tax_calculation(request):
+    """
+    Save automatic tax calculation results to database
+    """
+    try:
+        calculator = AutomaticTaxCalculator(request.user)
+        tax_analysis = calculator.calculate_comprehensive_tax_savings()
+        
+        # Create or update tax calculation record
+        tax_calculation, created = TaxCalculation.objects.get_or_create(
+            user=request.user,
+            financial_year=calculator.financial_year,
+            defaults={
+                'total_deductions': tax_analysis['summary']['total_eligible_deductions'],
+                'tax_liability': Decimal('0'),  # This would be calculated separately
+                'effective_tax_rate': Decimal('0'),
+                'calculation_date': datetime.now(),
+                'is_automatic': True
+            }
+        )
+        
+        if not created:
+            # Update existing record
+            tax_calculation.total_deductions = tax_analysis['summary']['total_eligible_deductions']
+            tax_calculation.calculation_date = datetime.now()
+            tax_calculation.is_automatic = True
+            tax_calculation.save()
+        
+        return Response({
+            'status': 'success',
+            'message': 'Tax calculation saved successfully',
+            'data': {
+                'calculation_id': tax_calculation.id,
+                'financial_year': calculator.financial_year,
+                'total_deductions': float(tax_analysis['summary']['total_eligible_deductions'])
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error saving tax calculation: {e}")
+        return Response({
+            'status': 'error',
+            'message': 'Unable to save tax calculation'
+        }, status=500)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def tax_optimization_recommendations(request):
+    """
+    Get personalized tax optimization recommendations
+    """
+    try:
+        calculator = AutomaticTaxCalculator(request.user)
+        tax_analysis = calculator.calculate_comprehensive_tax_savings()
+        
+        # Extract recommendations from analysis
+        all_recommendations = []
+        
+        # Section-wise recommendations
+        for section, data in tax_analysis['deductions_by_section'].items():
+            if 'recommendations' in data:
+                section_recs = [{
+                    'section': section,
+                    'type': 'section_specific',
+                    'recommendation': rec,
+                    'priority': 'high' if 'maximize' in rec.lower() else 'medium'
+                } for rec in data['recommendations']]
+                all_recommendations.extend(section_recs)
+        
+        # Overall recommendations
+        if 'recommendations' in tax_analysis:
+            overall_recs = [{
+                'section': 'overall',
+                'type': 'general',
+                'recommendation': rec,
+                'priority': 'medium'
+            } for rec in tax_analysis['recommendations']]
+            all_recommendations.extend(overall_recs)
+        
+        return Response({
+            'status': 'success',
+            'data': {
+                'recommendations': all_recommendations,
+                'total_recommendations': len(all_recommendations),
+                'financial_year': calculator.financial_year
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting tax optimization recommendations: {e}")
+        return Response({
+            'status': 'error',
+            'message': 'Unable to get recommendations'
+        }, status=500)
 
 # End of views file

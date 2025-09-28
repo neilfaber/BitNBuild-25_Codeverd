@@ -57,15 +57,27 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            text-decoration: none;
+        }
+        
+        .navbar-nav {
+            align-items: center;
+        }
+        
+        .navbar-nav .nav-item {
+            margin: 0 0.25rem;
         }
         
         .navbar-nav .nav-link {
             color: rgba(255, 255, 255, 0.9) !important;
             font-weight: 500;
-            padding: 0.5rem 1rem !important;
-            border-radius: 20px;
+            padding: 0.75rem 1rem !important;
+            border-radius: 25px;
             transition: all 0.3s ease;
-            margin: 0 0.25rem;
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+            text-decoration: none;
         }
         
         .navbar-nav .nav-link:hover {
@@ -74,13 +86,41 @@
             transform: translateY(-2px);
         }
         
+        .navbar-nav .nav-link i {
+            margin-right: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        /* User profile dropdown styling */
+        .nav-link .user-avatar {
+            display: flex;
+            align-items: center;
+        }
+        
+        .nav-link .user-name {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        /* Navbar toggler for mobile */
+        .navbar-toggler {
+            border: none;
+            padding: 0.25rem 0.5rem;
+        }
+        
+        .navbar-toggler:focus {
+            box-shadow: none;
+        }
+        
         .dropdown-menu {
             border: none;
             border-radius: 15px;
             box-shadow: var(--card-shadow);
-            padding: 0.5rem 0;
-            z-index: 1060; /* Higher than navbar */
+            padding: 0.75rem 0;
+            z-index: 1060;
             position: absolute;
+            min-width: 250px;
+            margin-top: 0.5rem;
         }
         
         .dropdown {
@@ -96,9 +136,38 @@
             padding: 0.75rem 1.5rem;
             transition: all 0.3s ease;
             border-radius: 0;
+            display: flex;
+            align-items: center;
+            font-weight: 500;
         }
         
         .dropdown-item:hover {
+            background: var(--light-green);
+            color: var(--secondary-green);
+            transform: translateX(5px);
+        }
+        
+        .dropdown-item i {
+            width: 20px;
+            text-align: center;
+        }
+        
+        /* Profile dropdown specific styling */
+        .profile-dropdown {
+            min-width: 280px;
+        }
+        
+        .dropdown-header {
+            padding: 1rem 1.5rem;
+            background: linear-gradient(135deg, var(--light-green), #dcfce7);
+            border-radius: 10px 10px 0 0;
+            margin-bottom: 0.5rem;
+        }
+        
+        .dropdown-divider {
+            margin: 0.5rem 0;
+            opacity: 0.1;
+        }
             background-color: var(--light-green);
             color: var(--primary-green);
             transform: translateX(5px);
@@ -452,6 +521,56 @@
             margin-left: 0.5rem;
         }
         
+        /* Mobile responsive navbar */
+        @media (max-width: 991.98px) {
+            .navbar-nav {
+                margin-top: 1rem;
+                padding-top: 1rem;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            
+            .navbar-nav .nav-item {
+                margin: 0.25rem 0;
+            }
+            
+            .navbar-nav .nav-link {
+                padding: 0.75rem 1rem !important;
+                border-radius: 10px;
+                background: rgba(255, 255, 255, 0.05);
+                margin-bottom: 0.5rem;
+            }
+            
+            .dropdown-menu {
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(10px);
+                margin-top: 0.5rem;
+                border: 1px solid rgba(16, 185, 129, 0.2);
+            }
+            
+            .navbar-brand {
+                font-size: 1.3rem;
+            }
+        }
+        
+        /* Extra small screens */
+        @media (max-width: 575.98px) {
+            .navbar-brand {
+                font-size: 1.2rem;
+            }
+            
+            .nav-link .user-name {
+                display: none;
+            }
+            
+            .dropdown-menu {
+                min-width: 200px;
+            }
+            
+            .profile-dropdown {
+                min-width: 220px;
+            }
+        }
+        
         /* Animations */
         .fade-in {
             animation: fadeIn 0.6s ease-in;
@@ -511,59 +630,67 @@
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
-                                <a class="navbar-brand d-flex align-items-center" href="{% url 'analyzer:upload' %}">
-                <i class="fas fa-calculator me-2"></i>TaxWise AI
+            <a class="navbar-brand" href="{% url 'tax_optimization:home' %}">
+                <i class="fas fa-calculator"></i>
+                <span>TaxWise AI</span>
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
+            
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'tax_optimization:home' %}">
-                            <i class="fas fa-home me-1"></i>Home
+                            <i class="fas fa-home"></i>
+                            <span>Home</span>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'tax_optimization:calculator' %}">
-                            <i class="fas fa-calculator me-1"></i>Tax Calculator
+                            <i class="fas fa-calculator"></i>
+                            <span>Tax Calculator</span>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'tax_optimization:recommendations' %}">
-                            <i class="fas fa-lightbulb me-1"></i>Tax Recommendations
+                            <i class="fas fa-lightbulb"></i>
+                            <span>Tax Recommendations</span>
                         </a>
                     </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="cibilDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-credit-card me-1"></i>CIBIL Advisor
+                            <i class="fas fa-credit-card"></i>
+                            <span>CIBIL Advisor</span>
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="cibilDropdown">
                             <li><a class="dropdown-item" href="{% url 'tax_optimization:cibil-dashboard' %}">
-                                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                                <i class="fas fa-tachometer-alt"></i>Dashboard
                             </a></li>
                             <li><a class="dropdown-item" href="{% url 'tax_optimization:cibil-analysis' %}">
-                                <i class="fas fa-chart-bar me-2"></i>Score Analysis
+                                <i class="fas fa-chart-bar"></i>Score Analysis
                             </a></li>
                             <li><a class="dropdown-item" href="{% url 'tax_optimization:cibil-recommendations' %}">
-                                <i class="fas fa-lightbulb me-2"></i>Improve Score
+                                <i class="fas fa-lightbulb"></i>Improve Score
                             </a></li>
                             <li><a class="dropdown-item" href="{% url 'tax_optimization:cibil-whatif' %}">
-                                <i class="fas fa-magic me-2"></i>What-If Scenarios
+                                <i class="fas fa-magic"></i>What-If Scenarios
                             </a></li>
                         </ul>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'analyzer:upload' %}">
-                            <i class="fas fa-upload me-1"></i>Bank Statement Analysis
+                            <i class="fas fa-upload"></i>
+                            <span>Bank Statement Analysis</span>
                         </a>
                     </li>
                     
                     <!-- User Profile Dropdown -->
                     {% if user.is_authenticated %}
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <div class="user-avatar me-2">
+                        <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <div class="user-avatar">
                                 <i class="fas fa-user-circle fa-lg"></i>
                             </div>
                             <span class="user-name">{{ user.first_name|default:user.username }}</span>
@@ -578,21 +705,22 @@
                             </li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#accountInfoModal">
-                                <i class="fas fa-info-circle me-2"></i>Account Info
+                                <i class="fas fa-info-circle"></i>Account Info
                             </a></li>
                             <li><a class="dropdown-item" href="#" onclick="showUserStats()">
-                                <i class="fas fa-chart-bar me-2"></i>My Statistics
+                                <i class="fas fa-chart-bar"></i>My Statistics
                             </a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{% url 'authentication:logout' %}">
-                                <i class="fas fa-sign-out-alt me-2"></i>Sign Out
+                                <i class="fas fa-sign-out-alt"></i>Sign Out
                             </a></li>
                         </ul>
                     </li>
                     {% else %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'authentication:login' %}">
-                            <i class="fas fa-sign-in-alt me-1"></i>Login
+                            <i class="fas fa-sign-in-alt"></i>
+                            <span>Login</span>
                         </a>
                     </li>
                     {% endif %}

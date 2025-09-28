@@ -542,7 +542,23 @@
             <nav>
                 <ul class="nav-links">
                     {% if user.is_authenticated %}
-                        <li><a href="{% url 'tax_optimization:home' %}"><i class="fas fa-brain"></i> Tax AI</a></li>
+                        <li class="nav-dropdown">
+                            <a href="{% url 'tax_optimization:home' %}"><i class="fas fa-calculator"></i> Tax Optimizer</a>
+                            <div class="dropdown-menu">
+                                <a href="{% url 'tax_optimization:home' %}">
+                                    <i class="fas fa-brain me-2"></i>Tax AI
+                                </a>
+                                <a href="{% url 'tax_optimization:automatic_tax_dashboard' %}">
+                                    <i class="fas fa-magic me-2"></i>Auto Calculator
+                                </a>
+                                <a href="{% url 'tax_optimization:calculator' %}">
+                                    <i class="fas fa-calculator me-2"></i>Manual Calculator
+                                </a>
+                                <a href="{% url 'tax_optimization:recommendations' %}">
+                                    <i class="fas fa-lightbulb me-2"></i>Recommendations
+                                </a>
+                            </div>
+                        </li>
                         <li><a href="{% url 'analyzer:upload' %}"><i class="fas fa-file-invoice-dollar"></i> Analyzer</a></li>
                         <li class="nav-dropdown">
                             <a href="{% url 'cibil:dashboard' %}"><i class="fas fa-chart-line"></i> CIBIL Advisor</a>
