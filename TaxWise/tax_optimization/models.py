@@ -232,6 +232,7 @@ class TaxCalculation(models.Model):
     # Metadata
     calculation_date = models.DateTimeField(auto_now_add=True)
     is_final = models.BooleanField(default=False)
+    is_automatic = models.BooleanField(default=False)  # Flag for automatic calculations
 
     class Meta:
         unique_together = ['user', 'financial_year']

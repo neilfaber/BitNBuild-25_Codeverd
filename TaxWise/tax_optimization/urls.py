@@ -14,6 +14,10 @@ frontend_patterns = [
     path('calculator/', views.calculator_page, name='calculator'),
     path('recommendations/', views.recommendations_page, name='recommendations'),
     
+    # Automatic Tax Calculator pages
+    path('auto-calculator/', views.automatic_tax_dashboard, name='automatic_tax_dashboard'),
+    path('auto-calculator/section/<str:section>/', views.section_detail_view, name='section_detail'),
+    
     # CIBIL Score Advisor pages
     path('cibil/', views.cibil_dashboard, name='cibil-dashboard'),
     path('cibil/analysis/', views.cibil_analysis, name='cibil-analysis'),
@@ -26,6 +30,12 @@ simple_api_patterns = [
     path('calculate/', views.calculate_tax_simple, name='api-calculate-simple'),
     path('classify/', views.classify_transaction_simple, name='api-classify-simple'),
     path('recommendations/', views.get_recommendations_simple, name='api-recommendations-simple'),
+    
+    # Automatic Tax Calculator API endpoints
+    path('auto-tax-calculations/', views.get_automatic_tax_calculations, name='api-auto-tax-calculations'),
+    path('section-analysis/<str:section>/', views.get_section_wise_analysis, name='api-section-analysis'),
+    path('save-tax-calculation/', views.save_tax_calculation, name='api-save-tax-calculation'),
+    path('tax-recommendations/', views.tax_optimization_recommendations, name='api-tax-recommendations'),
     
     # CIBIL Score API endpoints
     path('cibil/score/', views.get_cibil_score, name='api-cibil-score'),
