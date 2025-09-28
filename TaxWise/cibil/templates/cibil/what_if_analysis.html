@@ -1,0 +1,686 @@
+{% extends "tax_optimization/base.html" %}
+{% load static %}
+
+{% block title %}CIBIL Score What-If Analysis - TaxWise{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css">
+<style>
+    :root {
+        --primary-green: #10B981;
+        --secondary-green: #059669;
+        --success-green: #22C55E;
+        --light-green: #ECFDF5;
+        --gray-text: #4B5563;
+    }
+
+    .scenario-card {
+        border: 2px solid var(--light-green);
+        border-radius: 18px;
+        transition: all 0.3s ease;
+        background: white;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .scenario-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary-green), var(--secondary-green));
+        transition: height 0.3s ease;
+    }
+
+    .scenario-card:hover {
+        border-color: var(--primary-green);
+        box-shadow: 0 8px 30px rgba(16, 185, 129, 0.15);
+        transform: translateY(-3px);
+    }
+
+    .scenario-card:hover::before {
+        height: 6px;
+    }
+
+    .current-score {
+        font-size: 3.5rem;
+        font-weight: 800;
+        color: var(--primary-green);
+        text-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+        position: relative;
+    }
+
+    .projected-score {
+        font-size: 3.5rem;
+        font-weight: 800;
+        color: var(--success-green);
+        text-shadow: 0 2px 4px rgba(34, 197, 94, 0.2);
+        position: relative;
+        animation: pulse-glow 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-glow {
+        0%, 100% { text-shadow: 0 0 20px rgba(34, 197, 94, 0.3); }
+        50% { text-shadow: 0 0 30px rgba(34, 197, 94, 0.6), 0 0 40px rgba(34, 197, 94, 0.4); }
+    }
+
+    .improvement-arrow {
+        font-size: 3rem;
+        color: var(--success-green);
+        animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% { transform: translateX(0); }
+        40% { transform: translateX(-5px); }
+        60% { transform: translateX(5px); }
+    }
+
+    .scenario-input {
+        background: #F9FAFB;
+        border: 2px solid #E5E7EB;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        padding: 12px 16px;
+        font-weight: 500;
+    }
+
+    .scenario-input:focus {
+        border-color: var(--primary-green);
+        box-shadow: 0 0 0 0.25rem rgba(16, 185, 129, 0.25);
+        background: white;
+    }
+
+    .simulation-result {
+        background: linear-gradient(135deg, var(--light-green), #F0FDF4);
+        border: 2px solid var(--success-green);
+        border-radius: 20px;
+        padding: 30px;
+        margin-top: 30px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .simulation-result::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 150px;
+        height: 150px;
+        background: radial-gradient(circle, rgba(34, 197, 94, 0.1) 0%, transparent 70%);
+        border-radius: 50%;
+        transform: translate(50px, -50px);
+    }
+
+    .change-item {
+        background: rgba(16, 185, 129, 0.1);
+        border-left: 4px solid var(--primary-green);
+        padding: 15px 20px;
+        margin: 8px 0;
+        border-radius: 8px;
+        font-weight: 500;
+        color: var(--gray-text);
+        transition: all 0.3s ease;
+    }
+
+    .change-item:hover {
+        background: rgba(16, 185, 129, 0.15);
+        transform: translateX(5px);
+    }
+
+    .card {
+        border: none;
+        border-radius: 20px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(16, 185, 129, 0.12);
+    }
+
+    .card-header {
+        background: linear-gradient(135deg, var(--light-green), #F0FDF4);
+        border: none;
+        border-radius: 20px 20px 0 0 !important;
+        padding: 20px 30px;
+    }
+
+    .card-header h5, .card-header h6 {
+        color: var(--secondary-green);
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary-green), var(--secondary-green));
+        border: none;
+        border-radius: 12px;
+        font-weight: 600;
+        padding: 12px 24px;
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-primary::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
+    }
+
+    .btn-primary:hover::before {
+        left: 100%;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 25px rgba(16, 185, 129, 0.4);
+        background: linear-gradient(135deg, var(--secondary-green), #047857);
+    }
+
+    .btn-outline-primary {
+        border: 2px solid var(--primary-green);
+        color: var(--primary-green);
+        background: transparent;
+        border-radius: 12px;
+        font-weight: 600;
+        padding: 12px 24px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-outline-primary:hover {
+        background: linear-gradient(135deg, var(--primary-green), var(--secondary-green));
+        border-color: var(--primary-green);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 25px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-lg {
+        padding: 16px 32px;
+        font-size: 1.1rem;
+    }
+
+    .stats-card {
+        background: white;
+        border: 2px solid var(--light-green);
+        border-radius: 15px;
+        padding: 20px;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+    .stats-card:hover {
+        border-color: var(--primary-green);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.15);
+    }
+
+    .text-primary {
+        color: var(--primary-green) !important;
+    }
+
+    .text-success {
+        color: var(--success-green) !important;
+    }
+
+    .text-info {
+        color: var(--primary-green) !important;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--light-green), rgba(16, 185, 129, 0.05));
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 30px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 200px;
+        height: 200px;
+        background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%);
+        border-radius: 50%;
+        transform: translate(50px, -50px);
+    }
+
+    .table th {
+        background: var(--light-green);
+        color: var(--secondary-green);
+        font-weight: 700;
+        border: none;
+        padding: 15px;
+    }
+
+    .table td {
+        padding: 15px;
+        vertical-align: middle;
+    }
+
+    .badge {
+        font-weight: 600;
+        padding: 8px 16px;
+        border-radius: 20px;
+    }
+
+    .bg-success {
+        background: linear-gradient(135deg, var(--success-green), var(--primary-green)) !important;
+    }
+
+    .bg-primary {
+        background: linear-gradient(135deg, var(--primary-green), var(--secondary-green)) !important;
+    }
+
+    .bg-info {
+        background: linear-gradient(135deg, #3B82F6, #1D4ED8) !important;
+    }
+
+    .input-group-text {
+        background: var(--light-green);
+        border: 2px solid #E5E7EB;
+        border-left: none;
+        color: var(--secondary-green);
+        font-weight: 600;
+    }
+
+    .form-check-input:checked {
+        background-color: var(--primary-green);
+        border-color: var(--primary-green);
+    }
+
+    .form-check-input:focus {
+        box-shadow: 0 0 0 0.25rem rgba(16, 185, 129, 0.25);
+    }
+
+    .form-check-label {
+        font-weight: 500;
+        color: var(--gray-text);
+    }
+
+    .empty-state-icon {
+        color: var(--primary-green);
+        font-size: 5rem;
+        margin-bottom: 30px;
+        opacity: 0.7;
+    }
+
+    /* Animation Classes */
+    .animate-fade-up {
+        opacity: 0;
+        transform: translateY(30px);
+        animation: fadeUp 0.8s ease-out forwards;
+    }
+
+    @keyframes fadeUp {
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Responsive Improvements */
+    @media (max-width: 768px) {
+        .current-score, .projected-score {
+            font-size: 2.5rem;
+        }
+        
+        .improvement-arrow {
+            font-size: 2rem;
+        }
+        
+        .page-header {
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .btn-primary, .btn-outline-primary {
+            padding: 10px 20px;
+            font-size: 14px;
+        }
+        
+        .scenario-card {
+            margin-bottom: 20px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-xxl py-4">
+    <!-- Page Header -->
+    <div class="page-header animate-fade-up" data-aos="fade-up">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="display-6 fw-bold mb-2 text-dark">
+                    <i class="fas fa-calculator me-3" style="color: var(--primary-green);"></i>CIBIL Score What-If Analysis
+                </h1>
+                <p class="fs-5 text-muted mb-0">Simulate how changes in your financial habits could impact your credit score</p>
+            </div>
+            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                <a href="{% url 'cibil:dashboard' %}" class="btn btn-outline-primary">
+                    <i class="fas fa-chart-line me-2"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% if current_score %}
+    <div class="row" data-aos="fade-up" data-aos-delay="100">
+        <!-- Current Score Display -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-body text-center p-4">
+                    <h5 class="card-title mb-4 fw-bold">Your Current Score</h5>
+                    <div class="current-score">{{ current_score.calculated_score }}</div>
+                    <h6 class="text-muted mb-4 fw-medium">{{ current_score.score_range }}</h6>
+                    
+                    <div class="row text-center g-3">
+                        <div class="col-12">
+                            <div class="stats-card {% if current_score.average_credit_utilization > 70 %}border-danger{% elif current_score.average_credit_utilization > 30 %}border-warning{% else %}border-success{% endif %}">
+                                <h6 class="text-muted mb-2 fw-medium">Current Utilization</h6>
+                                <h4 class="mb-0 fw-bold {% if current_score.average_credit_utilization > 70 %}text-danger{% elif current_score.average_credit_utilization > 30 %}text-warning{% else %}text-success{% endif %}">
+                                    {{ current_score.average_credit_utilization|floatformat:1 }}%
+                                </h4>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="stats-card {% if current_score.late_payments_count > 0 %}border-danger{% else %}border-success{% endif %}">
+                                <h6 class="text-muted mb-2 fw-medium">Late Payments</h6>
+                                <h4 class="mb-0 fw-bold {% if current_score.late_payments_count > 0 %}text-danger{% else %}text-success{% endif %}">
+                                    {{ current_score.late_payments_count }}
+                                </h4>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="stats-card">
+                                <h6 class="text-muted mb-2 fw-medium">Credit Limit</h6>
+                                <h4 class="mb-0 fw-bold text-primary">₹{{ current_score.total_credit_limit|floatformat:0 }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- What-If Scenario Builder -->
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header">
+                    <h5 class="d-flex align-items-center">
+                        <i class="fas fa-magic me-2"></i>Build Your Improvement Scenario
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <form id="scenarioForm">
+                        {% csrf_token %}
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="scenario-card p-4 h-100">
+                                    <h6 class="fw-bold mb-3 d-flex align-items-center">
+                                        <i class="fas fa-percentage text-primary me-2"></i>Credit Utilization
+                                    </h6>
+                                    <div class="mb-3">
+                                        <label for="reduce_utilization" class="form-label fw-medium">Reduce utilization by:</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control scenario-input" id="reduce_utilization" 
+                                                   name="reduce_utilization" min="0" max="100" step="0.1" value="0">
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                        <small class="text-muted">Current: {{ current_score.average_credit_utilization|floatformat:1 }}%</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="scenario-card p-4 h-100">
+                                    <h6 class="fw-bold mb-3 d-flex align-items-center">
+                                        <i class="fas fa-calendar-check text-success me-2"></i>Payment History
+                                    </h6>
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="eliminate_late_payments" 
+                                                   name="eliminate_late_payments">
+                                            <label class="form-check-label" for="eliminate_late_payments">
+                                                Eliminate all late payments
+                                            </label>
+                                        </div>
+                                        <small class="text-muted">Current late payments: {{ current_score.late_payments_count }}</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="scenario-card p-4 h-100">
+                                    <h6 class="fw-bold mb-3 d-flex align-items-center">
+                                        <i class="fas fa-credit-card text-info me-2"></i>Credit Limit
+                                    </h6>
+                                    <div class="mb-3">
+                                        <label for="increase_credit_limit" class="form-label fw-medium">Increase credit limit by:</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">₹</span>
+                                            <input type="number" class="form-control scenario-input" id="increase_credit_limit" 
+                                                   name="increase_credit_limit" min="0" step="1000" value="0">
+                                        </div>
+                                        <small class="text-muted">Current: ₹{{ current_score.total_credit_limit|floatformat:0 }}</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 d-flex align-items-end">
+                                <div class="w-100">
+                                    <button type="submit" class="btn btn-primary btn-lg w-100">
+                                        <i class="fas fa-magic me-2"></i>Calculate Impact
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Results Container -->
+                    <div id="simulationResults" style="display: none;" class="simulation-result position-relative">
+                        <div class="row text-center">
+                            <div class="col-md-4">
+                                <div class="current-score" id="currentScoreDisplay">{{ current_score.calculated_score }}</div>
+                                <p class="text-muted fw-medium">Current Score</p>
+                            </div>
+                            <div class="col-md-4 d-flex align-items-center justify-content-center">
+                                <i class="fas fa-arrow-right improvement-arrow"></i>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="projected-score" id="projectedScoreDisplay">---</div>
+                                <p class="text-success fw-medium">Projected Score</p>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <h6 class="fw-bold text-success mb-3">
+                                    <i class="fas fa-chart-line me-2"></i>Score Improvement: <span id="improvementPoints">0</span> points
+                                </h6>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="fw-bold text-info mb-3">
+                                    <i class="fas fa-clock me-2"></i>Expected Timeline: 3-6 months
+                                </h6>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <h6 class="fw-bold mb-3">Changes Applied:</h6>
+                            <div id="changesContainer">
+                                <!-- Changes will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Previous Simulations -->
+    {% if simulations %}
+    <div class="row mt-5" data-aos="fade-up" data-aos-delay="300">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h5 class="d-flex align-items-center">
+                        <i class="fas fa-history me-2"></i>Previous Simulations
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="border-0">Simulation Date</th>
+                                    <th class="border-0">Base Score</th>
+                                    <th class="border-0">Projected Score</th>
+                                    <th class="border-0">Improvement</th>
+                                    <th class="border-0">Timeline</th>
+                                    <th class="border-0">Key Changes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for simulation in simulations %}
+                                <tr>
+                                    <td class="fw-medium">{{ simulation.created_at|date:"M d, Y H:i" }}</td>
+                                    <td class="fw-bold">{{ simulation.base_score }}</td>
+                                    <td class="text-success fw-bold">{{ simulation.projected_score }}</td>
+                                    <td>
+                                        <span class="badge {% if simulation.score_improvement > 0 %}bg-success{% else %}bg-secondary{% endif %}">
+                                            +{{ simulation.score_improvement }} points
+                                        </span>
+                                    </td>
+                                    <td class="fw-medium">{{ simulation.timeframe_months }} months</td>
+                                    <td>
+                                        {% if simulation.proposed_changes.changes %}
+                                            <small>
+                                                {% for change in simulation.proposed_changes.changes %}
+                                                    {{ change|truncatechars:50 }}{% if not forloop.last %}<br>{% endif %}
+                                                {% endfor %}
+                                            </small>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <!-- No Current Score -->
+    <div class="row" data-aos="fade-up">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-body text-center py-5">
+                    <div class="empty-state-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h4 class="mt-4 mb-3 fw-bold">No Credit Score Data Available</h4>
+                    <p class="text-muted mb-4 fs-5">Please upload your credit card statements first to calculate your CIBIL score before running what-if scenarios.</p>
+                    <a href="{% url 'analyzer:upload' %}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-upload me-2"></i>Upload Credit Card Statements
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- AOS Animation Library -->
+<script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize AOS
+    AOS.init({
+        duration: 800,
+        offset: 100,
+        once: true
+    });
+
+    const form = document.getElementById('scenarioForm');
+    const resultsDiv = document.getElementById('simulationResults');
+
+    if (form) {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(form);
+            
+            try {
+                const response = await fetch('{% url "cibil:what_if_analysis" %}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Show results
+                    resultsDiv.style.display = 'block';
+                    
+                    // Update score displays
+                    document.getElementById('projectedScoreDisplay').textContent = data.projected_score;
+                    document.getElementById('improvementPoints').textContent = data.improvement;
+                    
+                    // Update changes container
+                    const changesContainer = document.getElementById('changesContainer');
+                    changesContainer.innerHTML = '';
+                    
+                    data.changes.forEach(change => {
+                        const changeDiv = document.createElement('div');
+                        changeDiv.className = 'change-item';
+                        changeDiv.textContent = change;
+                        changesContainer.appendChild(changeDiv);
+                    });
+                    
+                    // Scroll to results
+                    resultsDiv.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    alert('Error calculating scenario. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error calculating scenario. Please try again.');
+            }
+        });
+    }
+
+    // Add input validation
+    const inputs = document.querySelectorAll('.scenario-input');
+    inputs.forEach(input => {
+        input.addEventListener('input', function() {
+            if (this.value < 0) this.value = 0;
+            if (this.name === 'reduce_utilization' && this.value > 100) this.value = 100;
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -17,157 +17,574 @@
     
     <style>
         :root {
-            --primary-color: #2c3e50;
-            --secondary-color: #3498db;
-            --success-color: #27ae60;
-            --warning-color: #f39c12;
-            --danger-color: #e74c3c;
-            --light-bg: #f8f9fa;
-            --dark-text: #2c3e50;
-            --card-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            --primary-green: #10B981;
+            --secondary-green: #059669;
+            --light-green: #f0fdf4;
+            --success-color: #10B981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --info-color: #3b82f6;
+            --light-bg: #f8fafc;
+            --white: #ffffff;
+            --dark-text: #1a202c;
+            --muted-text: #64748b;
+            --border-color: #e2e8f0;
+            --card-shadow: 0 10px 25px rgba(16, 185, 129, 0.1);
+            --hover-shadow: 0 20px 40px rgba(16, 185, 129, 0.15);
         }
         
         body {
-            background-color: var(--light-bg);
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
             color: var(--dark-text);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            min-height: 100vh;
+        }
+        
+        /* Navigation Styles */
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-green) 0%, var(--secondary-green) 100%);
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
+            backdrop-filter: blur(10px);
+            padding: 1rem 0;
+            position: relative;
+            z-index: 1050; /* Higher than Bootstrap's default navbar z-index */
         }
         
         .navbar-brand {
-            font-weight: bold;
+            font-weight: 700;
             font-size: 1.5rem;
+            color: white !important;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
         }
         
-        .navbar {
-            box-shadow: var(--card-shadow);
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        .navbar-nav {
+            align-items: center;
         }
         
-        .card {
+        .navbar-nav .nav-item {
+            margin: 0 0.25rem;
+        }
+        
+        .navbar-nav .nav-link {
+            color: rgba(255, 255, 255, 0.9) !important;
+            font-weight: 500;
+            padding: 0.75rem 1rem !important;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+            text-decoration: none;
+        }
+        
+        .navbar-nav .nav-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white !important;
+            transform: translateY(-2px);
+        }
+        
+        .navbar-nav .nav-link i {
+            margin-right: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        /* User profile dropdown styling */
+        .nav-link .user-avatar {
+            display: flex;
+            align-items: center;
+        }
+        
+        .nav-link .user-name {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        /* Navbar toggler for mobile */
+        .navbar-toggler {
+            border: none;
+            padding: 0.25rem 0.5rem;
+        }
+        
+        .navbar-toggler:focus {
+            box-shadow: none;
+        }
+        
+        .dropdown-menu {
             border: none;
             border-radius: 15px;
             box-shadow: var(--card-shadow);
-            transition: transform 0.3s ease;
+            padding: 0.75rem 0;
+            z-index: 1060;
+            position: absolute;
+            min-width: 250px;
+            margin-top: 0.5rem;
+        }
+        
+        .dropdown {
+            position: relative;
+            z-index: 1055;
+        }
+        
+        .nav-item.dropdown {
+            z-index: 1055;
+        }
+        
+        .dropdown-item {
+            padding: 0.75rem 1.5rem;
+            transition: all 0.3s ease;
+            border-radius: 0;
+            display: flex;
+            align-items: center;
+            font-weight: 500;
+        }
+        
+        .dropdown-item:hover {
+            background: var(--light-green);
+            color: var(--secondary-green);
+            transform: translateX(5px);
+        }
+        
+        .dropdown-item i {
+            width: 20px;
+            text-align: center;
+        }
+        
+        /* Profile dropdown specific styling */
+        .profile-dropdown {
+            min-width: 280px;
+        }
+        
+        .dropdown-header {
+            padding: 1rem 1.5rem;
+            background: linear-gradient(135deg, var(--light-green), #dcfce7);
+            border-radius: 10px 10px 0 0;
+            margin-bottom: 0.5rem;
+        }
+        
+        .dropdown-divider {
+            margin: 0.5rem 0;
+            opacity: 0.1;
+        }
+            background-color: var(--light-green);
+            color: var(--primary-green);
+            transform: translateX(5px);
+        }
+        
+        /* Card Styles */
+        .card {
+            border: none;
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            transition: all 0.3s ease;
+            background: var(--white);
+            overflow: hidden;
         }
         
         .card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-10px);
+            box-shadow: var(--hover-shadow);
+        }
+        
+        .card-header {
+            border: none;
+            border-radius: 20px 20px 0 0 !important;
+            padding: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+        }
+        
+        /* Button Styles */
+        .btn {
+            border-radius: 50px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
         }
         
         .btn-primary {
-            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
-            border: none;
-            border-radius: 25px;
-            padding: 10px 30px;
-            font-weight: 600;
-            transition: all 0.3s ease;
+            background: linear-gradient(135deg, var(--primary-green), var(--secondary-green));
+            color: white;
         }
         
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 15px rgba(52, 152, 219, 0.3);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+            background: linear-gradient(135deg, var(--secondary-green), var(--primary-green));
         }
         
+        .btn-success {
+            background: linear-gradient(135deg, #10B981, #059669);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+        }
+        
+        .btn-warning:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(245, 158, 11, 0.3);
+        }
+        
+        .btn-info {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+        }
+        
+        .btn-info:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+        }
+        
+        .btn-outline-primary {
+            border: 2px solid var(--primary-green);
+            color: var(--primary-green);
+            background: transparent;
+        }
+        
+        .btn-outline-primary:hover {
+            background: var(--primary-green);
+            color: white;
+            transform: translateY(-3px);
+        }
+        
+        .btn-outline-info {
+            border: 2px solid var(--info-color);
+            color: var(--info-color);
+            background: transparent;
+        }
+        
+        .btn-outline-info:hover {
+            background: var(--info-color);
+            color: white;
+            transform: translateY(-3px);
+        }
+        
+        /* Form Styles */
         .form-control {
-            border-radius: 10px;
-            border: 2px solid #e9ecef;
-            transition: border-color 0.3s ease;
+            border-radius: 15px;
+            border: 2px solid #e2e8f0;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+            background: var(--white);
         }
         
         .form-control:focus {
-            border-color: var(--secondary-color);
-            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+            border-color: var(--primary-green);
+            box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.25);
+            background: var(--white);
         }
         
+        /* Section Headers */
         .section-header {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            background: linear-gradient(135deg, var(--primary-green), var(--secondary-green));
             color: white;
-            padding: 20px;
-            border-radius: 15px 15px 0 0;
-            margin-bottom: 0;
+            padding: 2rem;
+            border-radius: 20px 20px 0 0;
+            text-align: center;
         }
         
-        .income-section { border-left: 4px solid var(--success-color); }
-        .expense-section { border-left: 4px solid var(--warning-color); }
-        .deduction-section { border-left: 4px solid var(--secondary-color); }
-        .tax-section { border-left: 4px solid var(--danger-color); }
-        
-        .regime-comparison {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 15px;
-            padding: 20px;
-            margin: 20px 0;
+        .section-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
         }
         
+        .section-header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin: 0;
+        }
+        
+        /* Color-coded sections */
+        .income-section { 
+            border-left: 4px solid var(--success-color);
+            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+        }
+        
+        .expense-section { 
+            border-left: 4px solid var(--warning-color);
+            background: linear-gradient(135deg, #fffbeb, #fef3c7);
+        }
+        
+        .deduction-section { 
+            border-left: 4px solid var(--info-color);
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+        }
+        
+        .tax-section { 
+            border-left: 4px solid var(--danger-color);
+            background: linear-gradient(135deg, #fef2f2, #fee2e2);
+        }
+        
+        /* Special highlight sections */
         .savings-highlight {
-            background: linear-gradient(135deg, var(--success-color), #2ecc71);
+            background: linear-gradient(135deg, var(--primary-green), var(--secondary-green));
             color: white;
-            padding: 15px;
-            border-radius: 10px;
+            padding: 2rem;
+            border-radius: 20px;
             text-align: center;
             font-size: 1.2rem;
-            font-weight: bold;
+            font-weight: 700;
+            box-shadow: var(--card-shadow);
         }
         
         .recommendation-card {
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
             color: white;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--card-shadow);
         }
         
-        .loading {
-            display: none;
-        }
-        
-        .spinner-border {
-            color: var(--secondary-color);
-        }
-        
-        .alert {
-            border-radius: 10px;
-            border: none;
-        }
-        
+        /* Progress bars */
         .progress {
-            height: 25px;
+            height: 20px;
             border-radius: 15px;
+            background-color: var(--light-bg);
             overflow: hidden;
         }
         
         .progress-bar {
-            background: linear-gradient(45deg, var(--success-color), #2ecc71);
+            background: linear-gradient(45deg, var(--primary-green), var(--secondary-green));
+            border-radius: 15px;
         }
         
+        /* Alert styles */
+        .alert {
+            border-radius: 15px;
+            border: none;
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+        }
+        
+        .alert-success {
+            background: var(--light-green);
+            color: var(--secondary-green);
+            border-left: 4px solid var(--primary-green);
+        }
+        
+        /* Footer */
         .footer {
-            background: var(--primary-color);
+            background: linear-gradient(135deg, var(--dark-text), #374151);
             color: white;
             text-align: center;
-            padding: 30px 0;
-            margin-top: 50px;
+            padding: 3rem 0;
+            margin-top: 4rem;
         }
         
+        /* Profile Dropdown Styles */
+        .profile-dropdown {
+            min-width: 280px;
+            box-shadow: var(--card-shadow);
+            border: none;
+            border-radius: 15px;
+            z-index: 1070; /* Highest z-index for profile dropdown */
+            position: absolute;
+        }
+        
+        #profileDropdown {
+            z-index: 1065;
+        }
+        
+        .profile-dropdown .dropdown-header {
+            background: linear-gradient(135deg, var(--primary-green), var(--secondary-green));
+            color: white;
+            border-radius: 15px 15px 0 0;
+            margin: -8px -16px 0 -16px;
+            padding: 20px 16px;
+        }
+        
+        .user-avatar {
+            display: inline-block;
+        }
+        
+        .user-name {
+            font-weight: 600;
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        /* Statistics cards */
+        .stats-card {
+            background: linear-gradient(135deg, var(--primary-green), var(--secondary-green));
+            color: white;
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            box-shadow: var(--card-shadow);
+        }
+        
+        .stats-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stats-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        /* Container improvements */
+        .container {
+            max-width: 1200px;
+            position: relative;
+            z-index: 1; /* Lower z-index than dropdowns */
+        }
+        
+        /* Ensure cards don't interfere with dropdowns */
+        .card {
+            position: relative;
+            z-index: 2; /* Lower than dropdowns but higher than container */
+        }
+        
+        /* Special handling for section headers */
+        .section-header {
+            background: linear-gradient(135deg, var(--primary-green), var(--secondary-green));
+            color: white;
+            padding: 2rem;
+            border-radius: 20px 20px 0 0;
+            text-align: center;
+            position: relative;
+            z-index: 1; /* Lower than dropdowns */
+        }
+        
+        /* Responsive design */
         @media (max-width: 768px) {
             .card {
-                margin-bottom: 20px;
+                margin-bottom: 1.5rem;
             }
             
-            .btn-primary {
+            .btn {
                 width: 100%;
-                margin-bottom: 10px;
+                margin-bottom: 0.5rem;
+            }
+            
+            .section-header h1 {
+                font-size: 2rem;
+            }
+            
+            .navbar-nav .nav-link {
+                text-align: center;
+            }
+            
+            /* Ensure mobile dropdowns work properly */
+            .dropdown-menu {
+                z-index: 1080;
             }
         }
         
-        /* Animation classes */
+        /* Bootstrap dropdown z-index overrides */
+        .dropdown-menu.show {
+            z-index: 1060 !important;
+        }
+        
+        .navbar-nav .dropdown-menu {
+            z-index: 1060 !important;
+            position: absolute !important;
+        }
+        
+        /* Ensure dropdown toggle works */
+        .dropdown-toggle::after {
+            margin-left: 0.5rem;
+        }
+        
+        /* Mobile responsive navbar */
+        @media (max-width: 991.98px) {
+            .navbar-nav {
+                margin-top: 1rem;
+                padding-top: 1rem;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            
+            .navbar-nav .nav-item {
+                margin: 0.25rem 0;
+            }
+            
+            .navbar-nav .nav-link {
+                padding: 0.75rem 1rem !important;
+                border-radius: 10px;
+                background: rgba(255, 255, 255, 0.05);
+                margin-bottom: 0.5rem;
+            }
+            
+            .dropdown-menu {
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(10px);
+                margin-top: 0.5rem;
+                border: 1px solid rgba(16, 185, 129, 0.2);
+            }
+            
+            .navbar-brand {
+                font-size: 1.3rem;
+            }
+        }
+        
+        /* Extra small screens */
+        @media (max-width: 575.98px) {
+            .navbar-brand {
+                font-size: 1.2rem;
+            }
+            
+            .nav-link .user-name {
+                display: none;
+            }
+            
+            .dropdown-menu {
+                min-width: 200px;
+            }
+            
+            .profile-dropdown {
+                min-width: 220px;
+            }
+        }
+        
+        /* Animations */
         .fade-in {
             animation: fadeIn 0.6s ease-in;
         }
         
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { 
+                opacity: 0; 
+                transform: translateY(20px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
         }
         
         .slide-in-right {
@@ -178,6 +595,33 @@
             from { opacity: 0; transform: translateX(50px); }
             to { opacity: 1; transform: translateX(0); }
         }
+        
+        /* Loading states */
+        .loading {
+            display: none;
+        }
+        
+        .spinner-border {
+            color: var(--primary-green);
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--light-bg);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-green);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary-green);
+        }
     </style>
     
     {% block extra_css %}{% endblock %}
@@ -187,53 +631,104 @@
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
             <a class="navbar-brand" href="{% url 'tax_optimization:home' %}">
-                <i class="fas fa-calculator me-2"></i>TaxWise AI
+                <i class="fas fa-calculator"></i>
+                <span>TaxWise AI</span>
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
+            
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'tax_optimization:home' %}">
-                            <i class="fas fa-home me-1"></i>Home
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'tax_optimization:calculator' %}">
-                            <i class="fas fa-calculator me-1"></i>Tax Calculator
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'tax_optimization:recommendations' %}">
-                            <i class="fas fa-lightbulb me-1"></i>Tax Recommendations
+                            <i class="fas fa-home"></i>
+                            <span>Home</span>
                         </a>
                     </li>
                     <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="taxDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                            <span>Tax AI</span>
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="taxDropdown">
+                            <li><a class="dropdown-item" href="{% url 'tax_optimization:calculator' %}">
+                                <i class="fas fa-calculator"></i> Calculator
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'tax_optimization:recommendations' %}">
+                                <i class="fas fa-lightbulb"></i> Recommendations
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'tax_optimization:automatic_tax_dashboard' %}">
+                                <i class="fas fa-robot"></i> Automatic Tax Analyzer
+                            </a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="cibilDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-credit-card me-1"></i>CIBIL Advisor
+                            <i class="fas fa-credit-card"></i>
+                            <span>CIBIL Advisor</span>
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="cibilDropdown">
                             <li><a class="dropdown-item" href="{% url 'tax_optimization:cibil-dashboard' %}">
-                                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                                <i class="fas fa-tachometer-alt"></i>Dashboard
                             </a></li>
                             <li><a class="dropdown-item" href="{% url 'tax_optimization:cibil-analysis' %}">
-                                <i class="fas fa-chart-bar me-2"></i>Score Analysis
+                                <i class="fas fa-chart-bar"></i>Score Analysis
                             </a></li>
                             <li><a class="dropdown-item" href="{% url 'tax_optimization:cibil-recommendations' %}">
-                                <i class="fas fa-lightbulb me-2"></i>Improve Score
+                                <i class="fas fa-lightbulb"></i>Improve Score
                             </a></li>
                             <li><a class="dropdown-item" href="{% url 'tax_optimization:cibil-whatif' %}">
-                                <i class="fas fa-magic me-2"></i>What-If Scenarios
+                                <i class="fas fa-magic"></i>What-If Scenarios
                             </a></li>
                         </ul>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'tax_optimization:data-ingestion-upload' %}">
-                            <i class="fas fa-cloud-upload-alt me-1"></i>Smart Data Ingestion
+                        <a class="nav-link" href="{% url 'analyzer:upload' %}">
+                            <i class="fas fa-upload"></i>
+                            <span>Bank Statement Analysis</span>
                         </a>
                     </li>
+                    
+                    <!-- User Profile Dropdown -->
+                    {% if user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <div class="user-avatar">
+                                <i class="fas fa-user-circle fa-lg"></i>
+                            </div>
+                            <span class="user-name">{{ user.first_name|default:user.username }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end profile-dropdown" aria-labelledby="profileDropdown">
+                            <li class="dropdown-header">
+                                <div class="text-center pb-2">
+                                    <i class="fas fa-user-circle fa-3x text-primary mb-2"></i>
+                                    <div class="fw-bold">{{ user.first_name|default:user.username }}</div>
+                                    <small class="text-muted">{{ user.email }}</small>
+                                </div>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#accountInfoModal">
+                                <i class="fas fa-info-circle"></i>Account Info
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="showUserStats()">
+                                <i class="fas fa-chart-bar"></i>My Statistics
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'authentication:logout' %}">
+                                <i class="fas fa-sign-out-alt"></i>Sign Out
+                            </a></li>
+                        </ul>
                     </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'authentication:login' %}">
+                            <i class="fas fa-sign-in-alt"></i>
+                            <span>Login</span>
+                        </a>
+                    </li>
+                    {% endif %}
                 </ul>
             </div>
         </div>
@@ -243,6 +738,167 @@
     <div class="container my-4">
         {% block content %}{% endblock %}
     </div>
+
+    <!-- Account Info Modal -->
+    {% if user.is_authenticated %}
+    <div class="modal fade" id="accountInfoModal" tabindex="-1" aria-labelledby="accountInfoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="accountInfoModalLabel">
+                        <i class="fas fa-user-circle me-2"></i>Account Information
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-4 text-center mb-4">
+                            <i class="fas fa-user-circle fa-5x text-primary mb-3"></i>
+                            <h5>{{ user.first_name|default:user.username }}</h5>
+                            <span class="badge bg-success">Active User</span>
+                        </div>
+                        <div class="col-md-8">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th><i class="fas fa-user me-2"></i>Full Name:</th>
+                                    <td>{{ user.first_name }} {{ user.last_name|default:"Not provided" }}</td>
+                                </tr>
+                                <tr>
+                                    <th><i class="fas fa-envelope me-2"></i>Email:</th>
+                                    <td>{{ user.email }}</td>
+                                </tr>
+                                <tr>
+                                    <th><i class="fas fa-id-badge me-2"></i>Username:</th>
+                                    <td>{{ user.username }}</td>
+                                </tr>
+                                <tr>
+                                    <th><i class="fas fa-calendar me-2"></i>Member Since:</th>
+                                    <td>{{ user.date_joined|date:"M d, Y" }}</td>
+                                </tr>
+                                <tr>
+                                    <th><i class="fas fa-clock me-2"></i>Last Login:</th>
+                                    <td>{{ user.last_login|date:"M d, Y H:i"|default:"Never" }}</td>
+                                </tr>
+                                <tr>
+                                    <th><i class="fas fa-shield-alt me-2"></i>Account Status:</th>
+                                    <td>
+                                        {% if user.is_active %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <i class="fas fa-info-circle me-2"></i>Account Features
+                                    </h6>
+                                    <ul class="list-unstyled mb-0">
+                                        <li><i class="fas fa-check text-success me-2"></i>AI-powered tax calculations</li>
+                                        <li><i class="fas fa-check text-success me-2"></i>CIBIL score analysis</li>
+                                        <li><i class="fas fa-check text-success me-2"></i>Smart data ingestion</li>
+                                        <li><i class="fas fa-check text-success me-2"></i>Personalized recommendations</li>
+                                        <li><i class="fas fa-check text-success me-2"></i>Bank statement analysis</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Statistics Modal -->
+    <div class="modal fade" id="userStatsModal" tabindex="-1" aria-labelledby="userStatsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title" id="userStatsModalLabel">
+                        <i class="fas fa-chart-bar me-2"></i>My TaxWise Statistics
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="stats-card bg-success">
+                                <div class="stats-number" id="totalCalculations">15</div>
+                                <div class="stats-label">Tax Calculations</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="stats-card bg-primary">
+                                <div class="stats-number" id="totalSavings">₹45,200</div>
+                                <div class="stats-label">Total Tax Savings</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="stats-card bg-warning">
+                                <div class="stats-number" id="cibilScore">750</div>
+                                <div class="stats-label">Current CIBIL Score</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="stats-card bg-info">
+                                <div class="stats-number" id="documentsUploaded">8</div>
+                                <div class="stats-label">Documents Processed</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6><i class="fas fa-history me-2"></i>Recent Activity</h6>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-group list-group-flush">
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <i class="fas fa-calculator text-primary me-2"></i>
+                                                Tax calculation completed
+                                            </div>
+                                            <small class="text-muted">2 days ago</small>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <i class="fas fa-credit-card text-info me-2"></i>
+                                                CIBIL score updated
+                                            </div>
+                                            <small class="text-muted">1 week ago</small>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <i class="fas fa-file-upload text-success me-2"></i>
+                                                Bank statement processed
+                                            </div>
+                                            <small class="text-muted">2 weeks ago</small>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Footer -->
     <footer class="footer">
@@ -320,6 +976,47 @@
                 }, index * 100);
             });
         });
+        
+        // Show user statistics modal
+        function showUserStats() {
+            // You can add AJAX call here to fetch real user statistics
+            // For now, we'll show the modal with sample data
+            const modal = new bootstrap.Modal(document.getElementById('userStatsModal'));
+            modal.show();
+            
+            // Optional: Animate numbers counting up
+            animateCounter('totalCalculations', 15, 1000);
+            animateCounter('cibilScore', 750, 1500);
+            animateCounter('documentsUploaded', 8, 800);
+        }
+        
+        // Animate counter numbers
+        function animateCounter(elementId, targetValue, duration) {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+            
+            const startValue = 0;
+            const increment = targetValue / (duration / 16);
+            let currentValue = startValue;
+            
+            const timer = setInterval(() => {
+                currentValue += increment;
+                if (currentValue >= targetValue) {
+                    clearInterval(timer);
+                    if (elementId === 'totalSavings') {
+                        element.textContent = '₹45,200';
+                    } else {
+                        element.textContent = Math.floor(targetValue);
+                    }
+                } else {
+                    if (elementId === 'totalSavings') {
+                        element.textContent = '₹' + Math.floor(currentValue).toLocaleString();
+                    } else {
+                        element.textContent = Math.floor(currentValue);
+                    }
+                }
+            }, 16);
+        }
     </script>
     
     {% block extra_js %}{% endblock %}

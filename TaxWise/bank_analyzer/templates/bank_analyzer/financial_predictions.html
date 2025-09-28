@@ -1,0 +1,1368 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Predictions - TaxWise AI</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-gradient: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+            --danger-gradient: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            --warning-gradient: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);
+            --info-gradient: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+            --excellent-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            --good-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --average-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --poor-gradient: linear-gradient(135deg, #fc466b 0%, #3f5efb 100%);
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --shadow-light: 0 8px 32px rgba(31, 38, 135, 0.1);
+            --shadow-medium: 0 8px 32px rgba(31, 38, 135, 0.2);
+            --shadow-heavy: 0 20px 40px rgba(31, 38, 135, 0.25);
+        }
+
+        * {
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 30%, #f093fb 70%, #43e97b 100%);
+            background-attachment: fixed;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+        }
+
+        .container-fluid {
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        /* Enhanced prediction cards */
+        .prediction-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-medium);
+            border: 1px solid var(--glass-border);
+            opacity: 0;
+            transform: translateY(30px);
+            animation: slideInUp 0.8s ease-out forwards;
+        }
+
+        .prediction-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.6s;
+        }
+
+        .prediction-card:hover::before {
+            left: 100%;
+        }
+
+        .prediction-card:hover {
+            transform: translateY(-15px) scale(1.02);
+            box-shadow: var(--shadow-heavy);
+        }
+
+        .prediction-card.excellent {
+            background: linear-gradient(135deg, rgba(67, 233, 123, 0.1), rgba(56, 249, 215, 0.1));
+            border-left: 5px solid #43e97b;
+        }
+
+        .prediction-card.good {
+            background: linear-gradient(135deg, rgba(79, 172, 254, 0.1), rgba(0, 242, 254, 0.1));
+            border-left: 5px solid #4facfe;
+        }
+
+        .prediction-card.average {
+            background: linear-gradient(135deg, rgba(240, 147, 251, 0.1), rgba(245, 87, 108, 0.1));
+            border-left: 5px solid #f093fb;
+        }
+
+        .prediction-card.poor {
+            background: linear-gradient(135deg, rgba(252, 70, 107, 0.1), rgba(63, 94, 251, 0.1));
+            border-left: 5px solid #fc466b;
+        }
+
+        @keyframes slideInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes rotate {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+        }
+
+        /* Enhanced health score circle */
+        .health-score-circle {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin: 0 auto 1.5rem;
+            position: relative;
+            animation: float 4s ease-in-out infinite;
+            box-shadow: var(--shadow-medium);
+        }
+
+        .health-score-circle::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            border-radius: 50%;
+            background: conic-gradient(transparent, rgba(255, 255, 255, 0.4), transparent);
+            animation: rotate 3s linear infinite;
+            z-index: -1;
+        }
+
+        .health-score-circle.excellent {
+            background: var(--excellent-gradient);
+            color: white;
+            box-shadow: 0 0 40px rgba(67, 233, 123, 0.4);
+        }
+
+        .health-score-circle.good {
+            background: var(--good-gradient);
+            color: white;
+            box-shadow: 0 0 40px rgba(79, 172, 254, 0.4);
+        }
+
+        .health-score-circle.average {
+            background: var(--average-gradient);
+            color: white;
+            box-shadow: 0 0 40px rgba(240, 147, 251, 0.4);
+        }
+
+        .health-score-circle.poor {
+            background: var(--poor-gradient);
+            color: white;
+            box-shadow: 0 0 40px rgba(252, 70, 107, 0.4);
+        }
+
+        /* Enhanced prediction items */
+        .prediction-item {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .prediction-item:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-light);
+        }
+
+        .prediction-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .prediction-item:hover::before {
+            left: 100%;
+        }
+
+        /* Enhanced priority cards */
+        .priority-high {
+            border-left: 5px solid #ff6b6b;
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(238, 90, 111, 0.1));
+            position: relative;
+        }
+
+        .priority-medium {
+            border-left: 5px solid #ffeaa7;
+            background: linear-gradient(135deg, rgba(255, 234, 167, 0.1), rgba(250, 177, 160, 0.1));
+        }
+
+        .priority-low {
+            border-left: 5px solid #56ab2f;
+            background: linear-gradient(135deg, rgba(86, 171, 47, 0.1), rgba(168, 230, 207, 0.1));
+        }
+
+        /* Enhanced timeline */
+        .action-timeline {
+            position: relative;
+            padding-left: 3rem;
+        }
+
+        .action-timeline::before {
+            content: '';
+            position: absolute;
+            left: 1rem;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--primary-gradient);
+            border-radius: 2px;
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 2.5rem;
+            opacity: 0;
+            transform: translateX(30px);
+            animation: slideInLeft 0.8s ease-out forwards;
+        }
+
+        .timeline-item:nth-child(2n) {
+            animation-delay: 0.2s;
+        }
+
+        .timeline-item:nth-child(3n) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes slideInLeft {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -2.5rem;
+            top: 1rem;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary-gradient);
+            border: 4px solid white;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.3), var(--shadow-light);
+            animation: pulse 2s infinite;
+        }
+
+        /* Enhanced cards */
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            box-shadow: var(--shadow-light);
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .card-header {
+            background: rgba(255, 255, 255, 0.1) !important;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .card-header.bg-primary {
+            background: var(--primary-gradient) !important;
+        }
+
+        .card-header.bg-success {
+            background: var(--success-gradient) !important;
+        }
+
+        .card-header.bg-warning {
+            background: var(--warning-gradient) !important;
+        }
+
+        .card-header.bg-info {
+            background: var(--info-gradient) !important;
+        }
+
+        .card-header.bg-dark {
+            background: linear-gradient(135deg, #333, #666) !important;
+        }
+
+        /* Enhanced badges */
+        .badge {
+            padding: 0.6rem 1.2rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .badge::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .badge:hover::before {
+            left: 100%;
+        }
+
+        .bg-danger {
+            background: var(--danger-gradient) !important;
+        }
+
+        .bg-warning {
+            background: var(--warning-gradient) !important;
+        }
+
+        .bg-success {
+            background: var(--success-gradient) !important;
+        }
+
+        .bg-primary {
+            background: var(--primary-gradient) !important;
+        }
+
+        .bg-info {
+            background: var(--info-gradient) !important;
+        }
+
+        /* Enhanced progress bars */
+        .progress {
+            height: 14px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.3);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar {
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-bar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            animation: progressShine 2s infinite;
+        }
+
+        @keyframes progressShine {
+            to { left: 100%; }
+        }
+
+        /* Insufficient data section */
+        .insufficient-data {
+            text-align: center;
+            padding: 4rem;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: var(--shadow-medium);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: fadeIn 1s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .insufficient-data i {
+            animation: pulse 2s infinite;
+        }
+
+        /* Header section */
+        .header-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .header-section h1 {
+            background: linear-gradient(135deg, #fff, #f0f0f0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Enhanced buttons */
+        .btn-outline-primary {
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 0.8rem 2rem;
+            font-weight: 600;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-outline-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            transition: left 0.3s;
+        }
+
+        .btn-outline-primary:hover::before {
+            left: 0;
+        }
+
+        .btn-outline-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-medium);
+            border-color: rgba(255, 255, 255, 0.6);
+            color: white;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: 15px;
+            padding: 1rem 2rem;
+            font-weight: 600;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        /* Enhanced summary section */
+        .prediction-summary {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 2.5rem;
+            margin: 2rem 0;
+            box-shadow: var(--shadow-medium);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .prediction-summary::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(transparent, rgba(102, 126, 234, 0.1), transparent);
+            animation: rotate 10s linear infinite;
+            z-index: -1;
+        }
+
+        /* Floating action button */
+        .floating-action {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 1000;
+        }
+
+        .floating-action .btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            box-shadow: var(--shadow-medium);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .floating-action .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.3s;
+        }
+
+        .floating-action .btn:hover::before {
+            left: 100%;
+        }
+
+        .floating-action .btn:hover {
+            transform: translateY(-5px) scale(1.1);
+            box-shadow: var(--shadow-heavy);
+        }
+
+        /* Text colors */
+        .text-primary {
+            color: #667eea !important;
+        }
+
+        .text-success {
+            color: #56ab2f !important;
+        }
+
+        .text-danger {
+            color: #ff6b6b !important;
+        }
+
+        .text-info {
+            color: #74b9ff !important;
+        }
+
+        .text-warning {
+            color: #fab1a0 !important;
+        }
+
+        .text-muted {
+            color: rgba(255, 255, 255, 0.7) !important;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            background: linear-gradient(135deg, #333, #666);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+        }
+
+        /* Risk meter enhancement */
+        .risk-meter {
+            width: 100%;
+            height: 24px;
+            background: linear-gradient(to right, #56ab2f 0%, #ffeaa7 50%, #ff6b6b 100%);
+            border-radius: 12px;
+            position: relative;
+            margin: 1rem 0;
+            box-shadow: var(--shadow-light);
+        }
+
+        .risk-indicator {
+            position: absolute;
+            top: -8px;
+            width: 40px;
+            height: 40px;
+            background: white;
+            border: 4px solid #333;
+            border-radius: 50%;
+            transform: translateX(-50%);
+            box-shadow: var(--shadow-medium);
+            animation: pulse 2s infinite;
+        }
+
+        /* Chart container enhancement */
+        .chart-container {
+            position: relative;
+            height: 350px;
+            margin: 2rem 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-light);
+        }
+
+        /* Responsive improvements */
+        @media (max-width: 768px) {
+            .prediction-card {
+                padding: 1.5rem;
+                margin-bottom: 1.5rem;
+            }
+            
+            .health-score-circle {
+                width: 100px;
+                height: 100px;
+                font-size: 1.8rem;
+            }
+            
+            .floating-action {
+                bottom: 1rem;
+                right: 1rem;
+            }
+            
+            .floating-action .btn {
+                width: 50px;
+                height: 50px;
+            }
+        }
+
+        /* Micro-interactions */
+        .fas {
+            transition: all 0.3s ease;
+        }
+
+        .card:hover .fas,
+        .prediction-card:hover .fas {
+            transform: scale(1.1) rotate(5deg);
+            color: #667eea;
+        }
+
+        /* Enhanced list items */
+        ul li {
+            margin-bottom: 0.5rem;
+            padding-left: 1rem;
+            position: relative;
+        }
+
+        ul li::before {
+            content: '▸';
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Loading states */
+        .loading {
+            position: relative;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(102, 126, 234, 0.3);
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid py-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="header-section">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="h2 mb-0">
+                                <i class="fas fa-crystal-ball me-2"></i>
+                                Financial Predictions & Analysis
+                            </h1>
+                            <p class="text-muted mb-0">AI-powered insights into your financial future</p>
+                        </div>
+                        <div>
+                            <a href="{% url 'analyzer:user_dashboard' %}" class="btn btn-outline-primary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if insufficient_data %}
+        <!-- Insufficient Data Warning -->
+        <div class="row">
+            <div class="col-12">
+                <div class="insufficient-data">
+                    <i class="fas fa-chart-line fa-5x text-muted mb-4"></i>
+                    <h3>More Data Needed for Accurate Predictions</h3>
+                    <p class="lead">You have {{ transaction_count }} transactions. Upload more bank statements (at least 10 transactions) to get comprehensive financial predictions.</p>
+                    <div class="mt-4">
+                        <a href="{% url 'analyzer:upload' %}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-upload me-2"></i>Upload Bank Statements
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+
+        <!-- Overall Financial Health -->
+        {% if predictions.overall_financial_health %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="prediction-card {% if predictions.overall_financial_health.status == 'Good' %}good{% elif predictions.overall_financial_health.status == 'Average' %}average{% else %}poor{% endif %}">
+                    <div class="row align-items-center">
+                        <div class="col-md-3 text-center">
+                            <div class="health-score-circle {% if predictions.overall_financial_health.score >= 80 %}excellent{% elif predictions.overall_financial_health.score >= 60 %}good{% elif predictions.overall_financial_health.score >= 40 %}average{% else %}poor{% endif %}">
+                                <span>{{ predictions.overall_financial_health.score }}/100</span>
+                            </div>
+                            <h5>Financial Health Score</h5>
+                        </div>
+                        <div class="col-md-4">
+                            <h4><i class="fas fa-heart-pulse me-2"></i>Overall Status: {{ predictions.overall_financial_health.status }}</h4>
+                            <h6 class="mt-3"><i class="fas fa-thumbs-up me-2"></i>Key Strengths:</h6>
+                            <ul class="list-unstyled">
+                                {% for strength in predictions.overall_financial_health.key_strengths %}
+                                <li><i class="fas fa-check text-success me-2"></i>{{ strength }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="col-md-5">
+                            <h6><i class="fas fa-exclamation-triangle me-2"></i>Areas of Concern:</h6>
+                            <ul class="list-unstyled">
+                                {% for concern in predictions.overall_financial_health.major_concerns %}
+                                <li><i class="fas fa-warning text-warning me-2"></i>{{ concern }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Tax Predictions Section -->
+        {% if predictions.tax_predictions %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">
+                            <i class="fas fa-receipt me-2"></i>Tax Predictions & Optimization
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- Current Year Tax Liability -->
+                            <div class="col-md-6 mb-3">
+                                <div class="prediction-item">
+                                    <h5><i class="fas fa-calculator me-2"></i>Current Year Tax Estimate</h5>
+                                    <h3 class="text-primary">₹{{ predictions.tax_predictions.current_year_liability.estimated_tax|floatformat:0 }}</h3>
+                                    <p><strong>Confidence:</strong> {{ predictions.tax_predictions.current_year_liability.confidence_level }}</p>
+                                    <small class="text-muted">{{ predictions.tax_predictions.current_year_liability.basis }}</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Next Year Projections -->
+                            <div class="col-md-6 mb-3">
+                                <div class="prediction-item">
+                                    <h5><i class="fas fa-trending-up me-2"></i>Next Year Projections</h5>
+                                    <p><strong>Expected Tax Increase:</strong> <span class="text-danger">₹{{ predictions.tax_predictions.next_year_projections.expected_tax_increase|floatformat:0 }}</span></p>
+                                    <p><strong>Potential Savings:</strong> <span class="text-success">₹{{ predictions.tax_predictions.next_year_projections.potential_savings|floatformat:0 }}</span></p>
+                                    <div>
+                                        <strong>Recommended Investments:</strong>
+                                        {% for investment in predictions.tax_predictions.next_year_projections.recommended_investments %}
+                                        <span class="badge bg-info me-1">{{ investment }}</span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Tax Optimization Opportunities -->
+                        {% if predictions.tax_predictions.tax_optimization_opportunities %}
+                        <div class="mt-4">
+                            <h5><i class="fas fa-lightbulb me-2"></i>Tax Optimization Opportunities</h5>
+                            <div class="row">
+                                {% for opportunity in predictions.tax_predictions.tax_optimization_opportunities %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h6 class="card-title">{{ opportunity.strategy }}</h6>
+                                            <p class="text-success"><strong>Potential Savings: ₹{{ opportunity.potential_savings|floatformat:0 }}</strong></p>
+                                            <p class="card-text">{{ opportunity.implementation }}</p>
+                                            <small class="text-muted"><i class="fas fa-clock me-1"></i>{{ opportunity.timeline }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Financial Predictions -->
+        {% if predictions.financial_predictions %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h4 class="mb-0">
+                            <i class="fas fa-chart-line me-2"></i>Financial Forecasts
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <!-- Short-term Forecast -->
+                        {% if predictions.financial_predictions.short_term_forecast %}
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h5><i class="fas fa-calendar-alt me-2"></i>Next 3 Months</h5>
+                                <div class="prediction-item">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Expected Income:</span>
+                                        <strong class="text-success">₹{{ predictions.financial_predictions.short_term_forecast.next_3_months.expected_income|floatformat:0 }}</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Expected Expenses:</span>
+                                        <strong class="text-danger">₹{{ predictions.financial_predictions.short_term_forecast.next_3_months.expected_expenses|floatformat:0 }}</strong>
+                                    </div>
+                                    <hr>
+                                    <div class="d-flex justify-content-between">
+                                        <span><strong>Surplus/Deficit:</strong></span>
+                                        <strong class="{% if predictions.financial_predictions.short_term_forecast.next_3_months.surplus_deficit > 0 %}text-success{% else %}text-danger{% endif %}">₹{{ predictions.financial_predictions.short_term_forecast.next_3_months.surplus_deficit|floatformat:0 }}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h5><i class="fas fa-calendar-check me-2"></i>Next 6 Months</h5>
+                                <div class="prediction-item">
+                                    <p><strong>Cash Flow Projection:</strong> ₹{{ predictions.financial_predictions.short_term_forecast.next_6_months.cash_flow_projection|floatformat:0 }}</p>
+                                    <div>
+                                        <strong>Major Expenses:</strong>
+                                        <ul class="mt-2">
+                                            {% for expense in predictions.financial_predictions.short_term_forecast.next_6_months.major_expenses %}
+                                            <li>{{ expense }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Long-term Forecast -->
+                        {% if predictions.financial_predictions.long_term_forecast %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5><i class="fas fa-calendar-plus me-2"></i>Next Year Outlook</h5>
+                                <div class="prediction-item">
+                                    <p><strong>Wealth Growth Projection:</strong> {{ predictions.financial_predictions.long_term_forecast.next_year.wealth_growth_projection }}%</p>
+                                    <div>
+                                        <strong>Risk Factors:</strong>
+                                        <ul class="mt-2">
+                                            {% for risk in predictions.financial_predictions.long_term_forecast.next_year.risk_factors %}
+                                            <li><i class="fas fa-exclamation-circle text-warning me-1"></i>{{ risk }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h5><i class="fas fa-calendar-week me-2"></i>5-Year Outlook</h5>
+                                <div class="prediction-item">
+                                    <p><strong>Projected Net Worth:</strong> ₹{{ predictions.financial_predictions.long_term_forecast.5_year_outlook.projected_net_worth|floatformat:0 }}</p>
+                                    <p><strong>Retirement Readiness:</strong> {{ predictions.financial_predictions.long_term_forecast.5_year_outlook.retirement_readiness }}%</p>
+                                    <div class="progress mb-2">
+                                        <div class="progress-bar" style="width: {{ predictions.financial_predictions.long_term_forecast.5_year_outlook.retirement_readiness }}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Risk Assessment -->
+        {% if predictions.risk_assessment %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-warning text-dark">
+                        <h4 class="mb-0">
+                            <i class="fas fa-shield-alt me-2"></i>Risk Assessment
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <!-- Immediate Risks -->
+                        {% if predictions.risk_assessment.immediate_risks %}
+                        <div class="mb-4">
+                            <h5><i class="fas fa-exclamation-triangle me-2"></i>Immediate Risks</h5>
+                            <div class="row">
+                                {% for risk in predictions.risk_assessment.immediate_risks %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="card border-{% if risk.impact == 'High' %}danger{% elif risk.impact == 'Medium' %}warning{% else %}success{% endif %}">
+                                        <div class="card-body">
+                                            <h6 class="card-title">{{ risk.risk }}</h6>
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span>Impact:</span>
+                                                <span class="badge bg-{% if risk.impact == 'High' %}danger{% elif risk.impact == 'Medium' %}warning{% else %}success{% endif %}">{{ risk.impact }}</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span>Probability:</span>
+                                                <span class="badge bg-{% if risk.probability == 'High' %}danger{% elif risk.probability == 'Medium' %}warning{% else %}success{% endif %}">{{ risk.probability }}</span>
+                                            </div>
+                                            <p class="card-text"><strong>Mitigation:</strong> {{ risk.mitigation }}</p>
+                                            <small class="text-muted">Est. Cost: ₹{{ risk.estimated_cost|floatformat:0 }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Future Challenges -->
+                        {% if predictions.risk_assessment.future_challenges %}
+                        <div>
+                            <h5><i class="fas fa-clock me-2"></i>Future Challenges</h5>
+                            {% for challenge in predictions.risk_assessment.future_challenges %}
+                            <div class="prediction-item mb-3">
+                                <div class="row align-items-center">
+                                    <div class="col-md-6">
+                                        <h6>{{ challenge.challenge }}</h6>
+                                        <p class="mb-0"><strong>Timeline:</strong> {{ challenge.timeline }}</p>
+                                    </div>
+                                    <div class="col-md-3 text-center">
+                                        <h5 class="text-danger">₹{{ challenge.impact_amount|floatformat:0 }}</h5>
+                                        <small>Estimated Impact</small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <p class="mb-0"><strong>Preparation:</strong></p>
+                                        <small>{{ challenge.preparation_needed }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Recommendations Section -->
+        {% if predictions.recommendations %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h4 class="mb-0">
+                            <i class="fas fa-lightbulb me-2"></i>AI Recommendations
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- Immediate Actions -->
+                            <div class="col-md-4">
+                                <h5><i class="fas fa-bolt me-2"></i>Immediate Actions</h5>
+                                {% for action in predictions.recommendations.immediate_actions %}
+                                <div class="card mb-3 priority-{{ action.priority|lower }}">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <h6 class="mb-0">{{ action.action }}</h6>
+                                            <span class="badge bg-{% if action.priority == 'High' %}danger{% elif action.priority == 'Medium' %}warning{% else %}success{% endif %}">{{ action.priority }}</span>
+                                        </div>
+                                        <p class="text-success mb-2"><strong>{{ action.expected_benefit }}</strong></p>
+                                        <small class="text-muted">
+                                            <i class="fas fa-clock me-1"></i>{{ action.timeline }}
+                                            <br><i class="fas fa-rupee-sign me-1"></i>Savings: ₹{{ action.estimated_savings|floatformat:0 }}
+                                        </small>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Strategic Planning -->
+                            <div class="col-md-4">
+                                <h5><i class="fas fa-chess me-2"></i>Strategic Planning</h5>
+                                {% for strategy in predictions.recommendations.strategic_planning %}
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <h6>{{ strategy.goal }}</h6>
+                                        <p class="mb-2">{{ strategy.strategy }}</p>
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <small>Investment:</small>
+                                            <small>₹{{ strategy.investment_amount|floatformat:0 }}</small>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <small>Expected Returns:</small>
+                                            <small>{{ strategy.expected_returns }}%</small>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <small>Tax Savings:</small>
+                                            <small class="text-success">₹{{ strategy.tax_savings|floatformat:0 }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Emergency Preparations -->
+                            <div class="col-md-4">
+                                <h5><i class="fas fa-first-aid me-2"></i>Emergency Prep</h5>
+                                {% for prep in predictions.recommendations.emergency_preparations %}
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <h6>{{ prep.scenario }}</h6>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Required Fund:</span>
+                                            <strong>₹{{ prep.required_fund|floatformat:0 }}</strong>
+                                        </div>
+                                        <div class="progress mb-2">
+                                            <div class="progress-bar bg-{% if prep.current_preparedness >= 80 %}success{% elif prep.current_preparedness >= 50 %}warning{% else %}danger{% endif %}" 
+                                                 style="width: {{ prep.current_preparedness }}%">
+                                                {{ prep.current_preparedness }}%
+                                            </div>
+                                        </div>
+                                        <small>{{ prep.recommended_action }}</small>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Monthly Action Plan -->
+        {% if predictions.monthly_action_plan %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-dark text-white">
+                        <h4 class="mb-0">
+                            <i class="fas fa-calendar-alt me-2"></i>Monthly Action Plan
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="action-timeline">
+                            {% for month in predictions.monthly_action_plan %}
+                            <div class="timeline-item">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5>Month {{ month.month }}: {{ month.focus_area }}</h5>
+                                        <div class="row">
+                                            <div class="col-md-8">
+                                                <h6>Specific Actions:</h6>
+                                                <ul>
+                                                    {% for action in month.specific_actions %}
+                                                    <li>{{ action }}</li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <h6>Budget Allocation:</h6>
+                                                <div class="d-flex justify-content-between">
+                                                    <small>Debt Payment:</small>
+                                                    <small>₹{{ month.budget_allocation.debt_payment|floatformat:0 }}</small>
+                                                </div>
+                                                <div class="d-flex justify-content-between">
+                                                    <small>Investments:</small>
+                                                    <small>₹{{ month.budget_allocation.investments|floatformat:0 }}</small>
+                                                </div>
+                                                <div class="d-flex justify-content-between">
+                                                    <small>Emergency Fund:</small>
+                                                    <small>₹{{ month.budget_allocation.emergency_fund|floatformat:0 }}</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Quick Stats Summary -->
+        <div class="prediction-summary">
+            <div class="row text-center">
+                <div class="col-md-3">
+                    <h4 class="text-primary">₹{{ user_data.total_credits|floatformat:0 }}</h4>
+                    <p>Total Income Analyzed</p>
+                </div>
+                <div class="col-md-3">
+                    <h4 class="text-danger">₹{{ user_data.total_debits|floatformat:0 }}</h4>
+                    <p>Total Expenses Analyzed</p>
+                </div>
+                <div class="col-md-3">
+                    <h4 class="{% if user_data.net_amount >= 0 %}text-success{% else %}text-danger{% endif %}">₹{{ user_data.net_amount|floatformat:0 }}</h4>
+                    <p>Net Financial Position</p>
+                </div>
+                <div class="col-md-3">
+                    <h4 class="text-info">{{ user_data.total_transactions }}</h4>
+                    <p>Transactions Analyzed</p>
+                </div>
+            </div>
+            <div class="text-center mt-3">
+                <small class="text-muted">
+                    <i class="fas fa-robot me-1"></i>Analysis generated by TaxWise AI on {{ generated_at|date:"F j, Y \a\\t g:i A" }}
+                </small>
+            </div>
+        </div>
+
+        {% endif %}
+
+        <!-- Floating Action Button -->
+        <div class="floating-action">
+            <div class="btn-group-vertical">
+                <button class="btn btn-primary btn-lg rounded-circle" onclick="window.print()">
+                    <i class="fas fa-print"></i>
+                </button>
+                <button class="btn btn-success btn-lg rounded-circle mt-2" onclick="shareReport()">
+                    <i class="fas fa-share-alt"></i>
+                </button>
+                <a href="{% url 'analyzer:upload' %}" class="btn btn-info btn-lg rounded-circle mt-2">
+                    <i class="fas fa-plus"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Enhanced loading and animations
+        document.addEventListener('DOMContentLoaded', function() {
+            // Stagger animation for prediction cards
+            const predictionCards = document.querySelectorAll('.prediction-card, .card');
+            predictionCards.forEach((card, index) => {
+                card.style.animationDelay = `${index * 0.1}s`;
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(30px)';
+                card.style.animation = 'slideInUp 0.8s ease-out forwards';
+            });
+
+            // Enhanced hover effects
+            const interactiveElements = document.querySelectorAll('.card, .prediction-card, .prediction-item, .btn');
+            interactiveElements.forEach(element => {
+                element.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-5px) scale(1.02)';
+                });
+                
+                element.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+
+            // Counter animation for financial values
+            const counters = document.querySelectorAll('h4');
+            counters.forEach(counter => {
+                const text = counter.textContent;
+                if (text.includes('₹')) {
+                    const value = parseInt(text.replace(/[₹,]/g, ''));
+                    if (!isNaN(value)) {
+                        animateValue(counter, 0, value, 2000);
+                    }
+                }
+            });
+
+            // Timeline item animations
+            const timelineItems = document.querySelectorAll('.timeline-item');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry, index) => {
+                    if (entry.isIntersecting) {
+                        setTimeout(() => {
+                            entry.target.style.opacity = '1';
+                            entry.target.style.transform = 'translateX(0)';
+                        }, index * 100);
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            timelineItems.forEach(item => {
+                observer.observe(item);
+            });
+
+            // Enhanced progress bar animations
+            const progressBars = document.querySelectorAll('.progress-bar');
+            progressBars.forEach(bar => {
+                const width = bar.style.width;
+                bar.style.width = '0%';
+                setTimeout(() => {
+                    bar.style.width = width;
+                    bar.style.transition = 'width 2s ease-in-out';
+                }, 500);
+            });
+
+            // Floating action button animations
+            const floatingBtns = document.querySelectorAll('.floating-action .btn');
+            floatingBtns.forEach((btn, index) => {
+                btn.style.transform = 'translateY(100px) scale(0)';
+                setTimeout(() => {
+                    btn.style.transform = 'translateY(0) scale(1)';
+                    btn.style.transition = 'all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+                }, 1000 + (index * 100));
+            });
+        });
+
+        // Enhanced counter animation function
+        function animateValue(element, start, end, duration) {
+            const startTimestamp = performance.now();
+            const step = (timestamp) => {
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+                const current = easeOutQuart * (end - start) + start;
+                element.textContent = '₹' + Math.floor(current).toLocaleString();
+                if (progress < 1) {
+                    requestAnimationFrame(step);
+                }
+            };
+            requestAnimationFrame(step);
+        }
+
+        // Share functionality
+        function shareReport() {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'My Financial Predictions - TaxWise AI',
+                    text: 'Check out my AI-generated financial predictions and recommendations!',
+                    url: window.location.href
+                }).catch(console.error);
+            } else {
+                // Fallback for browsers that don't support Web Share API
+                const url = window.location.href;
+                navigator.clipboard.writeText(url).then(() => {
+                    // Create a beautiful notification
+                    const notification = document.createElement('div');
+                    notification.className = 'alert alert-success position-fixed';
+                    notification.style.cssText = `
+                        top: 20px; right: 20px; z-index: 9999;
+                        background: var(--success-gradient);
+                        border: none; border-radius: 15px;
+                        box-shadow: var(--shadow-medium);
+                        color: white; font-weight: 600;
+                        transform: translateX(400px);
+                        transition: transform 0.3s ease;
+                    `;
+                    notification.innerHTML = '<i class="fas fa-check me-2"></i>Report link copied to clipboard!';
+                    document.body.appendChild(notification);
+                    
+                    setTimeout(() => notification.style.transform = 'translateX(0)', 100);
+                    setTimeout(() => {
+                        notification.style.transform = 'translateX(400px)';
+                        setTimeout(() => notification.remove(), 300);
+                    }, 3000);
+                }).catch(console.error);
+            }
+        }
+
+        // Parallax effect for background
+        window.addEventListener('scroll', () => {
+            const scrolled = window.pageYOffset;
+            const parallax = document.body;
+            const speed = scrolled * 0.3;
+            parallax.style.backgroundPosition = `center ${speed}px`;
+        });
+
+        // Enhanced keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'p' && e.ctrlKey) {
+                e.preventDefault();
+                window.print();
+            }
+            if (e.key === 's' && e.ctrlKey) {
+                e.preventDefault();
+                shareReport();
+            }
+        });
+
+        // Auto-refresh with enhanced notification
+        setTimeout(() => {
+            const refreshNotification = document.createElement('div');
+            refreshNotification.className = 'alert alert-info position-fixed';
+            refreshNotification.style.cssText = `
+                top: 20px; left: 50%; transform: translateX(-50%);
+                z-index: 9999; background: var(--info-gradient);
+                border: none; border-radius: 15px;
+                box-shadow: var(--shadow-medium);
+                color: white; font-weight: 600;
+                max-width: 400px; text-align: center;
+            `;
+            refreshNotification.innerHTML = `
+                <i class="fas fa-sync-alt me-2"></i>
+                Would you like to refresh your predictions?
+                <div class="mt-2">
+                    <button onclick="window.location.reload()" class="btn btn-light btn-sm me-2">Yes</button>
+                    <button onclick="this.parentElement.parentElement.remove()" class="btn btn-outline-light btn-sm">Later</button>
+                </div>
+            `;
+            document.body.appendChild(refreshNotification);
+        }, 1800000); // 30 minutes
+
+        // Enhanced error handling
+        window.addEventListener('error', function(e) {
+            console.error('JavaScript error:', e.error);
+        });
+
+        // Performance monitoring
+        window.addEventListener('load', function() {
+            const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;
+            console.log('Page load time:', loadTime + 'ms');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,428 @@
+{% extends "authentication/base.html" %}
+
+{% block title %}Section {{ section }} Analysis - TaxWise{% endblock %}
+
+{% block extra_css %}
+<style>
+    .analysis-card {
+        border: 1px solid #e3e6f0;
+        transition: box-shadow 0.15s ease-in-out;
+    }
+    
+    .analysis-card:hover {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    
+    .metric-box {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 15px;
+    }
+    
+    .metric-value {
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: #495057;
+    }
+    
+    .metric-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .progress-ring {
+        width: 120px;
+        height: 120px;
+        position: relative;
+        margin: 0 auto;
+    }
+    
+    .progress-ring-circle {
+        fill: none;
+        stroke: #e9ecef;
+        stroke-width: 8;
+    }
+    
+    .progress-ring-progress {
+        fill: none;
+        stroke: #28a745;
+        stroke-width: 8;
+        stroke-linecap: round;
+        transform-origin: 50% 50%;
+        transform: rotate(-90deg);
+        transition: stroke-dasharray 0.8s ease;
+    }
+    
+    .transaction-item {
+        border-bottom: 1px solid #f8f9fa;
+        padding: 15px 0;
+    }
+    
+    .transaction-item:last-child {
+        border-bottom: none;
+    }
+    
+    .recommendation-card {
+        border-left: 4px solid #17a2b8;
+        background: #f8f9fc;
+        margin-bottom: 15px;
+    }
+    
+    .source-breakdown {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 20px;
+    }
+    
+    .badge-amount {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    {% if error %}
+        <div class="alert alert-danger" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
+        </div>
+    {% else %}
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'automatic_tax_dashboard' %}">Tax Calculator</a>
+                        </li>
+                        <li class="breadcrumb-item active">Section {{ section }}</li>
+                    </ol>
+                </nav>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h3 mb-0 text-gray-800">
+                            {% if section == '80C' %}
+                                <i class="fas fa-coins text-primary me-2"></i>Section 80C Analysis
+                            {% elif section == '80D' %}
+                                <i class="fas fa-heartbeat text-danger me-2"></i>Section 80D Analysis
+                            {% elif section == '80G' %}
+                                <i class="fas fa-hand-holding-heart text-success me-2"></i>Section 80G Analysis
+                            {% elif section == '24B' %}
+                                <i class="fas fa-home text-warning me-2"></i>Section 24(b) Analysis
+                            {% endif %}
+                        </h1>
+                        <p class="text-muted">
+                            {% if section == '80C' %}
+                                Investments in PPF, ELSS, LIC, etc.
+                            {% elif section == '80D' %}
+                                Health insurance premiums
+                            {% elif section == '80G' %}
+                                Donations to eligible charities
+                            {% elif section == '24B' %}
+                                Home loan interest payments
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    <a href="{% url 'automatic_tax_dashboard' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overview Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="metric-box text-center">
+                    <div class="metric-value text-primary">₹{{ analysis.eligible_deduction|floatformat:0 }}</div>
+                    <div class="metric-label">Eligible Deduction</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-box text-center">
+                    <div class="metric-value text-info">
+                        {% if analysis.limit == 'No Limit' %}
+                            No Limit
+                        {% else %}
+                            ₹{{ analysis.limit|floatformat:0 }}
+                        {% endif %}
+                    </div>
+                    <div class="metric-label">Maximum Limit</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-box text-center">
+                    <div class="metric-value text-success">
+                        {% if analysis.utilization_percentage %}
+                            {{ analysis.utilization_percentage|floatformat:0 }}%
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </div>
+                    <div class="metric-label">Utilization</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-box text-center">
+                    <div class="metric-value text-warning">
+                        {% if analysis.remaining_limit %}
+                            ₹{{ analysis.remaining_limit|floatformat:0 }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </div>
+                    <div class="metric-label">Remaining Limit</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Utilization Progress -->
+        {% if analysis.utilization_percentage %}
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card analysis-card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Utilization Progress</h5>
+                        <div class="progress-ring">
+                            <svg width="120" height="120">
+                                <circle class="progress-ring-circle" cx="60" cy="60" r="52"></circle>
+                                <circle class="progress-ring-progress" cx="60" cy="60" r="52"
+                                        stroke-dasharray="0 327"
+                                        data-percentage="{{ analysis.utilization_percentage }}"></circle>
+                                <text x="60" y="60" text-anchor="middle" dy=".3em" 
+                                      style="font-size: 18px; font-weight: bold; fill: #495057;">
+                                    {{ analysis.utilization_percentage|floatformat:0 }}%
+                                </text>
+                            </svg>
+                        </div>
+                        <p class="mt-3 mb-0">
+                            <strong>{{ analysis.utilization_percentage|floatformat:0 }}%</strong> of limit utilized
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card analysis-card">
+                    <div class="card-body">
+                        <h5 class="card-title">Tax Savings Estimate</h5>
+                        <div class="row text-center">
+                            <div class="col-12 mb-2">
+                                <span class="badge bg-success badge-amount">
+                                    10% Bracket: ₹{{ analysis.tax_savings_10|floatformat:0 }}
+                                </span>
+                            </div>
+                            <div class="col-12 mb-2">
+                                <span class="badge bg-warning badge-amount">
+                                    20% Bracket: ₹{{ analysis.tax_savings_20|floatformat:0 }}
+                                </span>
+                            </div>
+                            <div class="col-12">
+                                <span class="badge bg-danger badge-amount">
+                                    30% Bracket: ₹{{ analysis.tax_savings_30|floatformat:0 }}
+                                </span>
+                            </div>
+                        </div>
+                        <small class="text-muted mt-2 d-block">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Savings based on your tax bracket
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="row">
+            <!-- Sources Breakdown -->
+            {% if analysis.sources %}
+            <div class="col-lg-6 mb-4">
+                <div class="card analysis-card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-pie me-2"></i>Sources Breakdown
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% for source, amount in analysis.sources.items %}
+                            {% if amount > 0 %}
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div>
+                                        <strong class="text-capitalize">
+                                            {% if source == 'credit_card' %}Credit Card
+                                            {% elif source == 'bank_transactions' %}Bank Transactions
+                                            {% elif source == 'investments' %}Investments
+                                            {% elif source == 'credit_card_emi' %}Credit Card EMI
+                                            {% else %}{{ source }}
+                                            {% endif %}
+                                        </strong>
+                                        <br>
+                                        <small class="text-muted">
+                                            {% if source == 'credit_card' %}
+                                                Credit card transactions
+                                            {% elif source == 'investments' %}
+                                                Recorded investments
+                                            {% elif source == 'bank_transactions' %}
+                                                Bank account transactions
+                                            {% elif source == 'credit_card_emi' %}
+                                                Credit card EMI payments
+                                            {% else %}
+                                                {{ source }} transactions
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                    <span class="badge bg-primary">₹{{ amount|floatformat:0 }}</span>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if not analysis.sources or analysis.sources.items|length == 0 %}
+                            <div class="text-center text-muted py-4">
+                                <i class="fas fa-search fa-2x mb-3"></i>
+                                <p>No sources found for this section</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Recent Transactions -->
+            <div class="col-lg-6 mb-4">
+                <div class="card analysis-card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-list me-2"></i>Recent Transactions
+                        </h5>
+                    </div>
+                    <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                        {% if analysis.transactions %}
+                            {% for txn in analysis.transactions %}
+                                <div class="transaction-item">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <strong>{{ txn.description|truncatechars:40 }}</strong>
+                                            {% if txn.merchant %}
+                                                <br>
+                                                <small class="text-muted">{{ txn.merchant }}</small>
+                                            {% endif %}
+                                            <br>
+                                            <small class="text-muted">
+                                                <i class="fas fa-calendar me-1"></i>
+                                                {{ txn.date|date:"M d, Y" }}
+                                            </small>
+                                        </div>
+                                        <span class="badge bg-success">
+                                            ₹{{ txn.amount|floatformat:0 }}
+                                        </span>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center text-muted py-4">
+                                <i class="fas fa-receipt fa-2x mb-3"></i>
+                                <p>No transactions found for this section</p>
+                                <small>Transactions are automatically categorized based on description</small>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recommendations -->
+        {% if analysis.recommendations %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card analysis-card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-lightbulb me-2"></i>Optimization Recommendations
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {% for rec in analysis.recommendations %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="recommendation-card p-3">
+                                        <i class="fas fa-arrow-right me-2 text-info"></i>
+                                        {{ rec }}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Special Notes -->
+        {% if analysis.note %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="alert alert-info" role="alert">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Note:</strong> {{ analysis.note }}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Action Buttons -->
+        <div class="row">
+            <div class="col-12 text-center">
+                <a href="{% url 'automatic_tax_dashboard' %}" class="btn btn-primary me-2">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                </a>
+                <button class="btn btn-success me-2" onclick="exportSection()">
+                    <i class="fas fa-download me-2"></i>Export Section
+                </button>
+                <button class="btn btn-info" onclick="refreshSection()">
+                    <i class="fas fa-sync me-2"></i>Refresh
+                </button>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate progress ring
+    const progressRing = document.querySelector('.progress-ring-progress');
+    if (progressRing) {
+        const percentage = progressRing.getAttribute('data-percentage');
+        const circumference = 2 * Math.PI * 52; // radius = 52
+        const progress = (percentage / 100) * circumference;
+        
+        setTimeout(() => {
+            progressRing.style.strokeDasharray = `${progress} ${circumference}`;
+        }, 500);
+    }
+});
+
+function exportSection() {
+    alert('Section export feature coming soon!');
+}
+
+function refreshSection() {
+    location.reload();
+}
+
+// Add filter functionality for transactions
+function filterTransactions(filter) {
+    const transactions = document.querySelectorAll('.transaction-item');
+    transactions.forEach(transaction => {
+        // Implementation for filtering transactions by amount, date, etc.
+        // This can be enhanced based on requirements
+        transaction.style.display = 'block';
+    });
+}
+</script>
+{% endblock %}
