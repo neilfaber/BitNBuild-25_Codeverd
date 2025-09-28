@@ -143,44 +143,11 @@
         </div>
     </div>
 
-    <!-- Regime Selection -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header bg-warning text-white">
-                    <h4><i class="fas fa-balance-scale me-2"></i>Choose Tax Regime</h4>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="taxRegime" id="newRegime" value="new" checked>
-                                <label class="form-check-label" for="newRegime">
-                                    <strong>New Tax Regime (Recommended)</strong><br>
-                                    <small class="text-muted">Lower tax rates, limited deductions</small>
-                                </label>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="taxRegime" id="oldRegime" value="old">
-                                <label class="form-check-label" for="oldRegime">
-                                    <strong>Old Tax Regime</strong><br>
-                                    <small class="text-muted">Higher tax rates, more deductions</small>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Calculate Button -->
     <div class="row mb-4">
         <div class="col-12 text-center">
             <button type="submit" class="btn btn-primary btn-lg">
-                <i class="fas fa-calculator me-2"></i>Calculate Tax & Compare Regimes
+                <i class="fas fa-calculator me-2"></i>Calculate Tax & Find Best Regime
             </button>
         </div>
     </div>
@@ -274,35 +241,23 @@ function calculateTotalDeductions() {
     return total;
 }
 
-// Update standard deduction based on regime
-function updateStandardDeduction() {
-    const regime = document.querySelector('input[name="taxRegime"]:checked').value;
-    const standardInput = document.getElementById('standardDeduction');
-    
-    if (regime === 'new') {
-        standardInput.value = 75000;
-    } else {
-        standardInput.value = 50000;
-    }
-    calculateTotalDeductions();
-}
-
-// Calculate tax for new regime
+// Calculate tax for new regime (FY 2024-25)
 function calculateNewRegimeTax(income, deductions) {
     const taxableIncome = Math.max(0, income - deductions);
     let tax = 0;
     
+    // New Tax Regime Slabs for FY 2024-25
     if (taxableIncome > 300000) {
-        if (taxableIncome <= 600000) {
+        if (taxableIncome <= 700000) {
             tax = (taxableIncome - 300000) * 0.05;
-        } else if (taxableIncome <= 900000) {
-            tax = 15000 + (taxableIncome - 600000) * 0.10;
+        } else if (taxableIncome <= 1000000) {
+            tax = 20000 + (taxableIncome - 700000) * 0.10;
         } else if (taxableIncome <= 1200000) {
-            tax = 45000 + (taxableIncome - 900000) * 0.15;
+            tax = 50000 + (taxableIncome - 1000000) * 0.15;
         } else if (taxableIncome <= 1500000) {
-            tax = 90000 + (taxableIncome - 1200000) * 0.20;
+            tax = 80000 + (taxableIncome - 1200000) * 0.20;
         } else {
-            tax = 150000 + (taxableIncome - 1500000) * 0.30;
+            tax = 140000 + (taxableIncome - 1500000) * 0.30;
         }
     }
     
@@ -342,34 +297,52 @@ function calculateOldRegimeTax(income, deductions) {
 }
 
 // Display tax results
-function displayResults(newRegime, oldRegime) {
+function displayResults(newRegime, oldRegime, totalIncome) {
     // New Regime Results
     document.getElementById('newRegimeResults').innerHTML = `
+        <div class="mb-2"><strong>Gross Income:</strong> ${formatCurrency(totalIncome)}</div>
+        <div class="mb-2"><strong>Deductions Allowed:</strong> ${formatCurrency(75000)} (Standard only)</div>
         <div class="mb-2"><strong>Taxable Income:</strong> ${formatCurrency(newRegime.taxableIncome)}</div>
         <div class="mb-2"><strong>Base Tax:</strong> ${formatCurrency(newRegime.baseTax)}</div>
         <div class="mb-2"><strong>Health & Education Cess (4%):</strong> ${formatCurrency(newRegime.cess)}</div>
-        <div class="mb-2"><strong>Total Tax:</strong> <span class="text-success">${formatCurrency(newRegime.totalTax)}</span></div>
-        <div><strong>Effective Tax Rate:</strong> ${newRegime.effectiveRate.toFixed(2)}%</div>
+        <div class="mb-3"><strong>Total Tax:</strong> <span class="text-success fs-5">${formatCurrency(newRegime.totalTax)}</span></div>
+        <div><strong>Effective Tax Rate:</strong> <span class="badge bg-success">${newRegime.effectiveRate.toFixed(2)}%</span></div>
     `;
+    
+    // Calculate old regime deductions display
+    const section80C = parseFloat(document.getElementById('section80C').value) || 0;
+    const section80D = parseFloat(document.getElementById('section80D').value) || 0;
+    const section80G = parseFloat(document.getElementById('section80G').value) || 0;
+    const section24b = parseFloat(document.getElementById('section24b').value) || 0;
+    const totalOldDeductions = 50000 + Math.min(section80C, 150000) + Math.min(section80D, 25000) + section80G + Math.min(section24b, 200000);
     
     // Old Regime Results
     document.getElementById('oldRegimeResults').innerHTML = `
+        <div class="mb-2"><strong>Gross Income:</strong> ${formatCurrency(totalIncome)}</div>
+        <div class="mb-2"><strong>Total Deductions:</strong> ${formatCurrency(totalOldDeductions)}</div>
         <div class="mb-2"><strong>Taxable Income:</strong> ${formatCurrency(oldRegime.taxableIncome)}</div>
         <div class="mb-2"><strong>Base Tax:</strong> ${formatCurrency(oldRegime.baseTax)}</div>
         <div class="mb-2"><strong>Health & Education Cess (4%):</strong> ${formatCurrency(oldRegime.cess)}</div>
-        <div class="mb-2"><strong>Total Tax:</strong> <span class="text-info">${formatCurrency(oldRegime.totalTax)}</span></div>
-        <div><strong>Effective Tax Rate:</strong> ${oldRegime.effectiveRate.toFixed(2)}%</div>
+        <div class="mb-3"><strong>Total Tax:</strong> <span class="text-info fs-5">${formatCurrency(oldRegime.totalTax)}</span></div>
+        <div><strong>Effective Tax Rate:</strong> <span class="badge bg-info">${oldRegime.effectiveRate.toFixed(2)}%</span></div>
     `;
     
     // Savings Highlight
     const savings = oldRegime.totalTax - newRegime.totalTax;
     const recommendedRegime = savings > 0 ? 'New' : 'Old';
     const savingsAmount = Math.abs(savings);
+    const savingsPercentage = totalIncome > 0 ? (savingsAmount / totalIncome * 100) : 0;
+    
+    let savingsClass = savings > 0 ? 'alert-success' : 'alert-info';
+    let savingsIcon = savings > 0 ? 'fa-trophy' : 'fa-info-circle';
     
     document.getElementById('savingsHighlight').innerHTML = `
-        <i class="fas fa-trophy me-2"></i>
-        Recommended: <strong>${recommendedRegime} Tax Regime</strong> - 
-        Save ${formatCurrency(savingsAmount)} annually!
+        <div class="alert ${savingsClass} text-center">
+            <h4><i class="fas ${savingsIcon} me-2"></i>Tax Optimization Result</h4>
+            <p class="mb-2"><strong>${recommendedRegime} Tax Regime</strong> is better for you!</p>
+            <p class="mb-0">Annual Savings: <strong>${formatCurrency(savingsAmount)}</strong> 
+            (${savingsPercentage.toFixed(2)}% of income)</p>
+        </div>
     `;
     
     // Update chart
@@ -436,10 +409,14 @@ document.getElementById('taxCalculatorForm').addEventListener('submit', function
     // Get form data
     const totalIncome = calculateTotalIncome();
     const standardDeduction = parseFloat(document.getElementById('standardDeduction').value) || 0;
+    const section80C = parseFloat(document.getElementById('section80C').value) || 0;
+    const section80D = parseFloat(document.getElementById('section80D').value) || 0;
+    const section80G = parseFloat(document.getElementById('section80G').value) || 0;
+    const section24b = parseFloat(document.getElementById('section24b').value) || 0;
     
     // Calculate deductions for both regimes
-    const newRegimeDeductions = standardDeduction; // New regime has limited deductions
-    const oldRegimeDeductions = calculateTotalDeductions(); // Old regime has all deductions
+    const newRegimeDeductions = 75000; // Only standard deduction in new regime
+    const oldRegimeDeductions = 50000 + Math.min(section80C, 150000) + Math.min(section80D, 25000) + section80G + Math.min(section24b, 200000);
     
     // Calculate tax for both regimes
     const newRegime = calculateNewRegimeTax(totalIncome, newRegimeDeductions);
@@ -448,7 +425,7 @@ document.getElementById('taxCalculatorForm').addEventListener('submit', function
     // Simulate API delay
     setTimeout(() => {
         document.getElementById('loadingIndicator').style.display = 'none';
-        displayResults(newRegime, oldRegime);
+        displayResults(newRegime, oldRegime, totalIncome);
     }, 1500);
 });
 
@@ -458,10 +435,6 @@ document.querySelectorAll('input[type="number"]').forEach(input => {
         calculateTotalIncome();
         calculateTotalDeductions();
     });
-});
-
-document.querySelectorAll('input[name="taxRegime"]').forEach(input => {
-    input.addEventListener('change', updateStandardDeduction);
 });
 
 // Initialize calculations
