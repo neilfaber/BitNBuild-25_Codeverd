@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test - TaxWise</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input { width: 200px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        #result { margin-top: 20px; padding: 15px; border-radius: 4px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .info { background: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>TaxWise API Test</h1>
+    
+    <form id="testForm">
+        <div class="form-group">
+            <label for="annual_income">Annual Income (₹):</label>
+            <input type="number" id="annual_income" name="annual_income" value="1000000" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="deductions">Deductions (₹):</label>
+            <input type="number" id="deductions" name="deductions" value="150000">
+        </div>
+        
+        <button type="submit">Calculate Tax</button>
+    </form>
+    
+    <div id="result"></div>
+    
+    <script>
+        document.getElementById('testForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<div class="info">Calculating...</div>';
+            
+            const formData = new FormData(this);
+            const data = {
+                annual_income: parseFloat(formData.get('annual_income')) || 0,
+                deductions: parseFloat(formData.get('deductions')) || 0
+            };
+            
+            try {
+                console.log('Sending request to:', '/tax-ai/api/calculate/');
+                console.log('Data:', data);
+                
+                const response = await fetch('/tax-ai/api/calculate/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                console.log('Response status:', response.status);
+                console.log('Response headers:', [...response.headers.entries()]);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                console.log('Result:', result);
+                
+                if (result.status === 'success') {
+                    const data = result.data;
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h3>Tax Calculation Result</h3>
+                            <p><strong>Annual Income:</strong> ₹${data.annual_income.toLocaleString()}</p>
+                            <p><strong>Deductions:</strong> ₹${data.deductions.toLocaleString()}</p>
+                            <p><strong>Taxable Income:</strong> ₹${data.taxable_income.toLocaleString()}</p>
+                            <p><strong>Base Tax:</strong> ₹${data.base_tax.toLocaleString()}</p>
+                            <p><strong>Cess (4%):</strong> ₹${data.cess.toLocaleString()}</p>
+                            <p><strong>Total Tax:</strong> ₹${data.total_tax.toLocaleString()}</p>
+                            <p><strong>Effective Rate:</strong> ${data.effective_rate.toFixed(2)}%</p>
+                            <p><strong>Tax Regime:</strong> ${data.tax_regime}</p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">Error: ${result.message}</div>`;
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        });
+    </script>
+</body>
+</html>

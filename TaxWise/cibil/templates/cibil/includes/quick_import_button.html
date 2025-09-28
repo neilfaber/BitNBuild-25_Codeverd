@@ -1,0 +1,31 @@
+<!-- Quick Import CIBIL Button -->
+<div class="quick-import-cibil">
+    <form method="POST" action="{% url 'cibil:quick_import' %}" data-no-intercept="true" class="d-inline">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-success" title="Calculate CIBIL score from your uploaded credit card statements">
+            <i class="fas fa-download me-1"></i>
+            Import CIBIL Score
+        </button>
+    </form>
+</div>
+
+<script>
+// Add loading state to quick import button
+document.addEventListener('DOMContentLoaded', function() {
+    const quickImportForm = document.querySelector('.quick-import-cibil form');
+    if (quickImportForm) {
+        quickImportForm.addEventListener('submit', function() {
+            const button = this.querySelector('button');
+            const originalText = button.innerHTML;
+            button.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Importing...';
+            button.disabled = true;
+            
+            // Re-enable button after 10 seconds in case of issues
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }, 10000);
+        });
+    }
+});
+</script>
