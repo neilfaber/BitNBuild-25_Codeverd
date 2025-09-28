@@ -1,0 +1,582 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ prediction_type|title }} Details - TaxWise AI</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .detail-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .metric-box {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+            margin-bottom: 1rem;
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 400px;
+            background: white;
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .timeline-container {
+            position: relative;
+            padding: 2rem 0;
+        }
+        
+        .timeline-line {
+            position: absolute;
+            left: 2rem;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, #007bff, #28a745);
+        }
+        
+        .timeline-event {
+            position: relative;
+            margin-left: 4rem;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+        
+        .timeline-event::before {
+            content: '';
+            position: absolute;
+            left: -3.5rem;
+            top: 1rem;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #007bff;
+            border: 4px solid white;
+            box-shadow: 0 0 0 2px #007bff;
+        }
+        
+        .recommendation-card {
+            border-left: 5px solid #007bff;
+            background: rgba(0,123,255,0.05);
+            padding: 1.5rem;
+            border-radius: 0 10px 10px 0;
+            margin-bottom: 1rem;
+        }
+        
+        .risk-indicator {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin: 0 auto 1rem;
+        }
+        
+        .risk-high {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+        }
+        
+        .risk-medium {
+            background: linear-gradient(135deg, #ffc107, #e0a800);
+            color: black;
+        }
+        
+        .risk-low {
+            background: linear-gradient(135deg, #28a745, #1e7e34);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid py-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h2 mb-0">
+                            {% if prediction_type == 'tax' %}
+                            <i class="fas fa-receipt text-primary me-2"></i>Tax Predictions Details
+                            {% elif prediction_type == 'financial' %}
+                            <i class="fas fa-chart-line text-success me-2"></i>Financial Forecast Details
+                            {% elif prediction_type == 'risk' %}
+                            <i class="fas fa-shield-alt text-warning me-2"></i>Risk Assessment Details
+                            {% else %}
+                            <i class="fas fa-lightbulb text-info me-2"></i>Recommendations Details
+                            {% endif %}
+                        </h1>
+                        <p class="text-muted">Comprehensive analysis and actionable insights</p>
+                    </div>
+                    <div>
+                        <a href="{% url 'analyzer:financial_predictions' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Predictions
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if prediction_type == 'tax' %}
+        <!-- Tax Details -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="metric-box">
+                    <div class="metric-value text-primary">₹{{ detail_data.current_year_liability.estimated_tax|floatformat:0 }}</div>
+                    <div>Current Year Tax Estimate</div>
+                    <small class="text-muted">{{ detail_data.current_year_liability.confidence_level }} Confidence</small>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="metric-box">
+                    <div class="metric-value text-success">₹{{ detail_data.next_year_projections.potential_savings|floatformat:0 }}</div>
+                    <div>Potential Tax Savings</div>
+                    <small class="text-muted">Next Financial Year</small>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="metric-box">
+                    <div class="metric-value text-info">{{ detail_data.tax_optimization_opportunities|length }}</div>
+                    <div>Optimization Opportunities</div>
+                    <small class="text-muted">Available Strategies</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tax Optimization Strategies -->
+        <div class="detail-card">
+            <h4><i class="fas fa-lightbulb me-2"></i>Tax Optimization Strategies</h4>
+            <div class="row">
+                {% for opportunity in detail_data.tax_optimization_opportunities %}
+                <div class="col-md-6 mb-3">
+                    <div class="recommendation-card">
+                        <h5>{{ opportunity.strategy }}</h5>
+                        <p class="mb-2">{{ opportunity.implementation }}</p>
+                        <div class="d-flex justify-content-between">
+                            <span><strong>Potential Savings:</strong></span>
+                            <span class="text-success">₹{{ opportunity.potential_savings|floatformat:0 }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span><strong>Timeline:</strong></span>
+                            <span>{{ opportunity.timeline }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {% elif prediction_type == 'financial' %}
+        <!-- Financial Forecast Details -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="metric-box">
+                    <div class="metric-value text-success">₹{{ detail_data.short_term_forecast.next_3_months.expected_income|floatformat:0 }}</div>
+                    <div>3-Month Income</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-box">
+                    <div class="metric-value text-danger">₹{{ detail_data.short_term_forecast.next_3_months.expected_expenses|floatformat:0 }}</div>
+                    <div>3-Month Expenses</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-box">
+                    <div class="metric-value {% if detail_data.short_term_forecast.next_3_months.surplus_deficit > 0 %}text-success{% else %}text-danger{% endif %}">₹{{ detail_data.short_term_forecast.next_3_months.surplus_deficit|floatformat:0 }}</div>
+                    <div>Net Surplus/Deficit</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-box">
+                    <div class="metric-value text-info">{{ detail_data.long_term_forecast.next_year.wealth_growth_projection }}%</div>
+                    <div>Growth Projection</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Financial Timeline -->
+        <div class="detail-card">
+            <h4><i class="fas fa-calendar-alt me-2"></i>Financial Timeline</h4>
+            <div class="timeline-container">
+                <div class="timeline-line"></div>
+                
+                <div class="timeline-event">
+                    <h5><i class="fas fa-calendar me-2"></i>Next 3 Months</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Key Challenges:</h6>
+                            <ul>
+                                {% for challenge in detail_data.short_term_forecast.next_3_months.key_challenges %}
+                                <li>{{ challenge }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Opportunities:</h6>
+                            <ul>
+                                {% for opportunity in detail_data.short_term_forecast.next_3_months.opportunities %}
+                                <li>{{ opportunity }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-event">
+                    <h5><i class="fas fa-calendar-check me-2"></i>Next 6 Months</h5>
+                    <p><strong>Cash Flow Projection:</strong> ₹{{ detail_data.short_term_forecast.next_6_months.cash_flow_projection|floatformat:0 }}</p>
+                    <div>
+                        <h6>Major Expenses:</h6>
+                        <ul>
+                            {% for expense in detail_data.short_term_forecast.next_6_months.major_expenses %}
+                            <li>{{ expense }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="timeline-event">
+                    <h5><i class="fas fa-calendar-plus me-2"></i>Next Year</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Growth Opportunities:</h6>
+                            <ul>
+                                {% for opportunity in detail_data.long_term_forecast.next_year.growth_opportunities %}
+                                <li>{{ opportunity }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Risk Factors:</h6>
+                            <ul>
+                                {% for risk in detail_data.long_term_forecast.next_year.risk_factors %}
+                                <li>{{ risk }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% elif prediction_type == 'risk' %}
+        <!-- Risk Assessment Details -->
+        <div class="row mb-4">
+            {% for risk in detail_data.immediate_risks %}
+            <div class="col-md-6 mb-3">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <div class="risk-indicator risk-{{ risk.impact|lower }}">
+                            {{ risk.impact }}
+                        </div>
+                        <h5>{{ risk.risk }}</h5>
+                        <p>{{ risk.mitigation }}</p>
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <strong>Probability</strong>
+                                <br>{{ risk.probability }}
+                            </div>
+                            <div class="col-6">
+                                <strong>Est. Cost</strong>
+                                <br>₹{{ risk.estimated_cost|floatformat:0 }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Future Challenges -->
+        <div class="detail-card">
+            <h4><i class="fas fa-exclamation-triangle me-2"></i>Future Challenges</h4>
+            {% for challenge in detail_data.future_challenges %}
+            <div class="recommendation-card mb-3">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h5>{{ challenge.challenge }}</h5>
+                        <p><strong>Timeline:</strong> {{ challenge.timeline }}</p>
+                        <p><strong>Preparation Needed:</strong> {{ challenge.preparation_needed }}</p>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <div class="metric-value text-danger">₹{{ challenge.impact_amount|floatformat:0 }}</div>
+                        <small>Estimated Impact</small>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% else %}
+        <!-- Recommendations Details -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="metric-box">
+                    <div class="metric-value text-danger">{{ detail_data.immediate_actions|length }}</div>
+                    <div>Immediate Actions</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="metric-box">
+                    <div class="metric-value text-info">{{ detail_data.strategic_planning|length }}</div>
+                    <div>Strategic Plans</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="metric-box">
+                    <div class="metric-value text-warning">{{ detail_data.emergency_preparations|length }}</div>
+                    <div>Emergency Preps</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Categories -->
+        <div class="detail-card">
+            <h4><i class="fas fa-tasks me-2"></i>Prioritized Actions</h4>
+            
+            <!-- Immediate Actions -->
+            <div class="mb-4">
+                <h5><i class="fas fa-bolt me-2"></i>Immediate Actions (High Priority)</h5>
+                {% for action in detail_data.immediate_actions %}
+                <div class="recommendation-card mb-3">
+                    <div class="row align-items-center">
+                        <div class="col-md-1">
+                            <span class="badge bg-{{ action.priority|lower == 'high' and 'danger' or action.priority|lower == 'medium' and 'warning' or 'success' }} fs-6">{{ action.priority }}</span>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>{{ action.action }}</h6>
+                            <p class="mb-0">{{ action.expected_benefit }}</p>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <strong>Timeline:</strong><br>{{ action.timeline }}
+                        </div>
+                        <div class="col-md-2 text-center">
+                            <strong class="text-success">₹{{ action.estimated_savings|floatformat:0 }}</strong><br>
+                            <small>Savings</small>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Strategic Planning -->
+            <div class="mb-4">
+                <h5><i class="fas fa-chess me-2"></i>Strategic Planning</h5>
+                {% for strategy in detail_data.strategic_planning %}
+                <div class="recommendation-card mb-3">
+                    <h6>{{ strategy.goal }}: {{ strategy.strategy }}</h6>
+                    <div class="row mt-3">
+                        <div class="col-md-3 text-center">
+                            <strong>Investment Required</strong><br>
+                            ₹{{ strategy.investment_amount|floatformat:0 }}
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <strong>Expected Returns</strong><br>
+                            {{ strategy.expected_returns }}% p.a.
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <strong>Tax Savings</strong><br>
+                            ₹{{ strategy.tax_savings|floatformat:0 }}
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <strong>Net Benefit</strong><br>
+                            <span class="text-success">₹{{ strategy.tax_savings|add:strategy.investment_amount|floatformat:0 }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Emergency Preparations -->
+            <div>
+                <h5><i class="fas fa-first-aid me-2"></i>Emergency Preparedness</h5>
+                {% for prep in detail_data.emergency_preparations %}
+                <div class="recommendation-card mb-3">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h6>{{ prep.scenario }}</h6>
+                            <p>{{ prep.recommended_action }}</p>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Required Fund:</strong><br>
+                            ₹{{ prep.required_fund|floatformat:0 }}
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Current Preparedness</strong>
+                            <div class="progress mt-2">
+                                <div class="progress-bar bg-{% if prep.current_preparedness >= 80 %}success{% elif prep.current_preparedness >= 50 %}warning{% else %}danger{% endif %}" 
+                                     style="width: {{ prep.current_preparedness }}%">
+                                    {{ prep.current_preparedness }}%
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Implementation Chart -->
+        <div class="detail-card">
+            <h4><i class="fas fa-chart-gantt me-2"></i>Implementation Roadmap</h4>
+            <div class="chart-container">
+                <canvas id="implementationChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Data Summary -->
+        <div class="detail-card">
+            <h4><i class="fas fa-database me-2"></i>Analysis Summary</h4>
+            <div class="row">
+                <div class="col-md-3 text-center">
+                    <h5 class="text-primary">₹{{ user_data.total_credits|floatformat:0 }}</h5>
+                    <p>Total Income</p>
+                </div>
+                <div class="col-md-3 text-center">
+                    <h5 class="text-danger">₹{{ user_data.total_debits|floatformat:0 }}</h5>
+                    <p>Total Expenses</p>
+                </div>
+                <div class="col-md-3 text-center">
+                    <h5 class="text-success">{{ user_data.total_transactions }}</h5>
+                    <p>Transactions</p>
+                </div>
+                <div class="col-md-3 text-center">
+                    <h5 class="text-info">{{ user_data.monthly_summaries|length }}</h5>
+                    <p>Months Analyzed</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Implementation Timeline Chart
+        const ctx = document.getElementById('implementationChart').getContext('2d');
+        
+        {% if prediction_type == 'recommendations' %}
+        const chartData = {
+            labels: [
+                {% for action in detail_data.immediate_actions %}
+                '{{ action.action|truncatechars:30 }}',
+                {% endfor %}
+            ],
+            datasets: [{
+                label: 'Estimated Savings (₹)',
+                data: [
+                    {% for action in detail_data.immediate_actions %}
+                    {{ action.estimated_savings }},
+                    {% endfor %}
+                ],
+                backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        };
+        {% elif prediction_type == 'tax' %}
+        const chartData = {
+            labels: [
+                {% for opportunity in detail_data.tax_optimization_opportunities %}
+                '{{ opportunity.strategy|truncatechars:20 }}',
+                {% endfor %}
+            ],
+            datasets: [{
+                label: 'Potential Savings (₹)',
+                data: [
+                    {% for opportunity in detail_data.tax_optimization_opportunities %}
+                    {{ opportunity.potential_savings }},
+                    {% endfor %}
+                ],
+                backgroundColor: 'rgba(75, 192, 192, 0.8)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        };
+        {% else %}
+        const chartData = {
+            labels: ['Current', '3 Months', '6 Months', '1 Year'],
+            datasets: [{
+                label: 'Financial Projection (₹)',
+                data: [
+                    {{ user_data.net_amount }},
+                    {% if detail_data.short_term_forecast.next_3_months.surplus_deficit %}
+                    {{ detail_data.short_term_forecast.next_3_months.surplus_deficit }},
+                    {{ detail_data.short_term_forecast.next_6_months.cash_flow_projection }},
+                    {% else %}
+                    0, 0,
+                    {% endif %}
+                    {% if detail_data.long_term_forecast %}
+                    {{ detail_data.long_term_forecast.5_year_outlook.projected_net_worth|default:0 }}
+                    {% else %}
+                    0
+                    {% endif %}
+                ],
+                backgroundColor: 'rgba(255, 99, 132, 0.8)',
+                borderColor: 'rgba(255, 99, 132, 1)',
+                borderWidth: 2,
+                fill: false
+            }]
+        };
+        {% endif %}
+
+        new Chart(ctx, {
+            type: '{% if prediction_type == "financial" %}line{% else %}bar{% endif %}',
+            data: chartData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '₹' + value.toLocaleString();
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ₹' + context.parsed.y.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
